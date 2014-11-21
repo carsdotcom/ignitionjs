@@ -1,0 +1,16 @@
+{
+  "name": "ignitionjs",
+  "version": "v1.0.0",
+  "authors": [
+    "Mac Heller-Ogden <mac@machellerogden.com>"
+  ],
+  "description": "A fast and flexible, module loader/bootstrapper for AngularJS",
+  "main": "dist/ignition.js",
+  "keywords": [
+    "bootstrap",
+    "angularjs",
+    "labjs"
+  ],
+  "license": "Apache 2.0",
+  "homepage": "https://github.com/carsdotcom/ignitionjs"
+}
