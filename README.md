@@ -41,7 +41,7 @@ Your build task would then concatenate all of these files into a single file (`/
 ## Bower Install
 
 ```text
-bower install ignitionjs
+bower install ignition
 ```
 
 ## Download
