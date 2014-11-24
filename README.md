@@ -38,6 +38,12 @@ Here's an example of what the structure of your original source might look like:
 
 Your build task would then concatenate all of these files into a single file (`/app/js/modules/common/common.js`).
 
+## Bower Install
+
+```text
+bower install ignitionjs
+```
+
 ## Download
 
 * [ignition.js](http://git.cars.com/projects/FE/repos/ignition/browse/dist/ignition.js)
