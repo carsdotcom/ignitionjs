@@ -8,14 +8,45 @@
  */
 (function () {
 
+    function register(registry, predicate, subject) {
+        if (typeof registry !== 'object' || !registry.hasOwnProperty('length')) {
+            throw new Error('Ignition Error: Argument `registry` must be an array.');
+        }
+        if (typeof predicate !== 'function') {
+            throw new Error('Ignition Error: Argument `predicate` must be a function.');
+        }
+        if (!predicate(subject)) {
+            throw new Error('Ignition Error: Invalid subject');
+        }
+        registry.push(subject);
+    }
+
+    function registerMultiple(registration, subjects) {
+        var i;
+        if (typeof registration !== 'function') {
+            throw new Error('Ignition Error: Argument `registration` must be a function');
+        }
+        if (typeof subjects !== 'object' || !subjects.hasOwnProperty('length')) {
+            throw new Error('Ignition Error: Argument `subjects` must be an array');
+        }
+        for (i = 0; i < subjects.length; i++) {
+            registration(subjects[i]);
+        }
+    }
+
     function Ignition(options) {
         var modules = [],
-            dependencies = [];
+            dependencies = [],
+            ignition = this;
 
         options = (typeof options === 'object') ? options : {};
 
         this.modulesDir = options.modulesDir || '/app/js/modules/';
-        this.moduleNameValidation = options.moduleNameValidation || /^[A-Za-z]+\w*$/;
+
+        this.moduleValidation = options.moduleValidation || function (subject) { return ((typeof subject === 'string') && /^[A-Za-z]+\w*$/.test(subject)); };
+
+        this.dependencyValidation = options.dependencyValidation || function (subject) { return (typeof subject === 'string'); };
+
         this.bootstrap = options.bootstrap || function (modules) {
             angular.bootstrap(document, Array.prototype.slice.call(modules, 0));
         };
@@ -29,22 +60,14 @@
         };
 
         this.registerModule = function (module) {
-            if ((typeof module === 'string') && this.moduleNameValidation.test(module)) {
-                if (modules.indexOf(module) === -1) {
-                    modules.push(module);
-                }
-            } else {
-                throw new Error('Ignition Error: Invalid module name');
+            if (modules.indexOf(module) < 0) {
+                register(modules, ignition.moduleValidation, module);
             }
         };
 
-        this.registerDependency = function (script) {
-            if (typeof script === 'string') {
-                if (dependencies.indexOf(script) === -1) {
-                    dependencies.push(script);
-                }
-            } else {
-                throw new Error('Ignition Error: Invalid dependency');
+        this.registerDependency = function (dependency) {
+            if (dependencies.indexOf(dependency) < 0) {
+                register(dependencies, ignition.dependencyValidation, dependency);
             }
         };
 
@@ -53,29 +76,15 @@
     Ignition.fn = Ignition.prototype;
 
     Ignition.fn.registerModules = function (modules) {
-        var i;
-        if (typeof modules === 'object' && typeof modules.length === 'number') {
-            for (i = 0; i < modules.length; i++) {
-                this.registerModule(modules[i]);
-            }
-        } else {
-            throw new Error('Ignition Error: Argument must be an array');
-        }
+        registerMultiple(this.registerModule, modules);
     };
 
-    Ignition.fn.registerDependencies = function (scripts) {
-        var i;
-        if (typeof scripts === 'object' && typeof scripts.length === 'number') {
-            for (i = 0; i < scripts.length; i++) {
-                this.registerDependency(scripts[i]);
-            }
-        } else {
-            throw new Error('Ignition Error: Argument must be an array');
-        }
+    Ignition.fn.registerDependencies = function (dependency) {
+        registerMultiple(this.registerDependency, dependency);
     };
 
     Ignition.fn.buildModulePath = function (name, baseDir) {
-        if (baseDir.substr(-1) != '/') {
+        if (baseDir.substr(-1) !== '/') {
             baseDir += '/';
         }
         return baseDir + name + '/' + name + '.js';

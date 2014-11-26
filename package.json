@@ -1,6 +1,6 @@
 {
   "name": "ignitionjs",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A fast and flexible, module loader/bootstrapper for AngularJS",
   "author": "Mac Heller-Ogden <mheller-ogden@cars.com>",
   "license": "MIT",
