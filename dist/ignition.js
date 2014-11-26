@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v1.0.0 <https://github.com/carsdotcom>
+ * IgnitionJS v1.1.1 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
