@@ -17,7 +17,7 @@
         this.modulesDir = options.modulesDir || '/app/js/modules/';
         this.moduleNameValidation = options.moduleNameValidation || /^[A-Za-z]+\w*$/;
         this.bootstrap = options.bootstrap || function (modules) {
-            angular.bootstrap(document, modules);
+            angular.bootstrap(document, Array.prototype.slice.call(modules, 0));
         };
 
         this.getModules = function () {
