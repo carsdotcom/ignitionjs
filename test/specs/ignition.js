@@ -1,11 +1,13 @@
 describe('an ignition instance', function () {
-    var ignition;
+    var ignition, LabConstructor, newLab;
 
     beforeEach(function () {
-        $LAB = {
-            script: function () {
-            }
-        };
+        LabConstructor = function () {};
+        newLab = function () { return new LabConstructor(); };
+        LabConstructor.prototype.script = newLab;
+        LabConstructor.prototype.wait = newLab;
+        $LAB = new LabConstructor();
+
         angular = {
             bootstrap: function () {}
         };
@@ -193,17 +195,17 @@ describe('an ignition instance', function () {
         });
     });
 
-    describe('#buildModulePath', function () {
+    describe('#getModulePath', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.buildModulePath).toEqual(jasmine.any(Function));
+            expect(ignition.getModulePath).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('with a base directory and module name should return a formatted module path', function () {
-                expect(ignition.buildModulePath('name', 'base/')).toEqual('base/name/name.js');
-                expect(ignition.buildModulePath('name', 'base')).toEqual('base/name/name.js');
+                expect(ignition.getModulePath('name', 'base/')).toEqual('base/name/name.js');
+                expect(ignition.getModulePath('name', 'base')).toEqual('base/name/name.js');
             });
         });
     });
@@ -217,17 +219,9 @@ describe('an ignition instance', function () {
         });
         describe('when called', function () {
             it('should call $LAB.script with an array and then call $LAB.wait with a function', function () {
-                spyOn($LAB, 'script').and.returnValue({
-                    wait: function () {
-                        return {
-                            script: function () {
-                                return { wait: function () {} };
-                            }
-                        };
-                    }
-                });
+                spyOn($LAB, 'script').and.returnValue(new LabConstructor());
                 ignition.load();
-                expect($LAB.script).toHaveBeenCalledWith([]);
+                expect($LAB.script).toHaveBeenCalledWith(jasmine.any(Function));
             });
         });
     });

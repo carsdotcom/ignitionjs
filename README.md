@@ -1,4 +1,4 @@
-# IgnitionJS v1.1.1
+# IgnitionJS v2.0.0
 
 IgnitionJS is an opinionated, yet flexible, module loader/bootstrapper for AngularJS (though it can be configured to run any bootstrap code you require). IgnitionJS depends on LABjs for script loading. While not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS, ignition provides a simple and efficient alternative to these systems and makes AngularJS bootstrapping considerations a breeze.
 
@@ -108,17 +108,17 @@ bower install ignition
 </html>
 ```
 
-### Example with all options
+### Example with more options
 
 ```js
 // when you instantiate ignition, you can pass an options object...
 var ignition = new Ignition({
-        // `modulesDir` sets the base modules directory
-        modulesDir: '/js/modules',
+        // `moduleDir` sets the base modules directory
+        moduleDir: '/js/modules',
         // `moduleValidation` is a predicate function which will is used to validate module names
         moduleValidation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); },
-        // `bootstrap` defines a custom bootstrap callback
-        bootstrap: function (modules) {
+        // `moduleBootstrap` overrides the default angular bootstrap callback
+        moduleBootstrap: function (modules) {
             angular.bootstrap(document.getElementById('app'), modules);
         }
     });
