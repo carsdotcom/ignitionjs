@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v2.0.2 <https://github.com/carsdotcom>
+ * IgnitionJS v2.0.3 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -147,8 +147,12 @@
     Ignition.fn.load = function () {
         var ignition = this;
         if (!$LAB) throw new IgnitionError('$LAB not found.');
-        $LAB.script(this.getDependencies).wait(this.dependencyBootstrap)
-            .script(this.getPlugins).wait(this.pluginBootstrap)
+        $LAB.script(this.getDependencies).wait(function () {
+                ignition.dependencyBootstrap();
+            })
+            .script(this.getPlugins).wait(function () {
+                ignition.pluginBootstrap();
+            })
             .script(this.getModuleSources()).wait(function () {
                 ignition.moduleBootstrap(ignition.getModules());
             });
