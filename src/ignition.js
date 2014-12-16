@@ -15,8 +15,19 @@
     IgnitionError.prototype = Error.prototype;
 
 
-    function isUnique(collection, item) {
-        return collection.indexOf(item) < 0;
+    function isRegistered(collection, item) {
+        var i;
+        if (typeof item === 'string') {
+            return collection.indexOf(item) >= 0;
+        } else if (typeof item === 'function') {
+            item = item.toString();
+            for (i = 0; i < collection.length; i++) {
+                if (typeof collection[i] === 'function') {
+                    if (collection[i].toString() === item) return true;
+                }
+            }
+        }
+        return false;
     }
 
     function generateRegistration(registry, predicate) {
@@ -30,7 +41,7 @@
             if (!predicate(subject)) {
                 throw new IgnitionError('Invalid subject');
             }
-            if (isUnique(registry, subject)) {
+            if (!isRegistered(registry, subject)) {
                 registry.push(subject);
             }
         };
