@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v2.0.3 <https://github.com/carsdotcom>
+ * IgnitionJS v2.0.5 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -8,37 +8,50 @@
  */
 (function () {
 
+    var isString,
+        isFunction,
+        isObject;
+
     function IgnitionError(message) {
         this.name = 'IgnitionError';
         this.message = (typeof message === 'string') ? message : '';
     }
     IgnitionError.prototype = Error.prototype;
 
+    function generateTypeValidation(type) {
+        return function (subject) {
+            var subjectType = typeof subject;
+            if (subjectType !== type) {
+                throw new IgnitionError('Expected `' + type + '`, instead recieved `' + subjectType + '`.' );
+            } else {
+                return true;
+            }
+        };
+    };
+
+    isString = generateTypeValidation('string');
+    isFunction = generateTypeValidation('function');
+    isObject = generateTypeValidation('object');
 
     function isRegistered(collection, item) {
-        var i;
+        var i,
+            spaces = / +?/g;
         if (typeof item === 'string') {
             return collection.indexOf(item) >= 0;
         } else if (typeof item === 'function') {
-            item = item.toString();
+            item = item.toString().replace(spaces, '');
             for (i = 0; i < collection.length; i++) {
                 if (typeof collection[i] === 'function') {
-                    if (collection[i].toString() === item) return true;
+                    if (collection[i].toString().replace(spaces, '') === item) return true;
                 }
             }
         }
         return false;
     }
 
-    function generateRegistration(registry, predicate) {
+    function generateRegistration(registry, validation) {
         return function (subject) {
-            if (typeof registry !== 'object' || !registry.hasOwnProperty('length')) {
-                throw new IgnitionError('Argument `registry` must be an array.');
-            }
-            if (typeof predicate !== 'function') {
-                throw new IgnitionError('Argument `predicate` must be a function.');
-            }
-            if (!predicate(subject)) {
+            if (!validation(subject)) {
                 throw new IgnitionError('Invalid subject');
             }
             if (!isRegistered(registry, subject)) {
@@ -49,22 +62,19 @@
 
     function registerMulti(registration, subjects) {
         var i;
-        if (typeof registration !== 'function') {
-            throw new IgnitionError('Argument `registration` must be a function');
-        }
-        if (typeof subjects !== 'object' || !subjects.hasOwnProperty('length')) {
-            throw new IgnitionError('Argument `subjects` must be an array');
-        }
-        for (i = 0; i < subjects.length; i++) {
-            registration(subjects[i]);
+        if (!(isObject(subjects) && subjects.hasOwnProperty('length'))) {
+            throw new IgnitionError('Expected `array`, instead recieved `' + typeof subjects + '`.' );
+        } else {
+            for (i = 0; i < subjects.length; i++) {
+                registration(subjects[i]);
+            }
         }
     }
 
-    function execFunctionQueue(queue, context) {
+    function execFunctionQueue(queue) {
         var i;
-        context = (typeof context === 'object') ? context : window;
         for (i = 0; i < queue.length; i++) {
-            queue[i].call(context);
+            queue[i].call(window);
         }
     };
 
@@ -73,13 +83,14 @@
             plugins = [],
             modules = [],
             dependencyBootstraps = [],
-            pluginBootstraps = [];
+            pluginBootstraps = [],
+            postLoadBootstraps = [];
 
         options = (typeof options === 'object') ? options : {};
 
-        this.dependencyValidation = this.pluginValidation = options.dependencyValidation || function (subject) { return (typeof subject === 'string'); };
+        this.dependencyValidation = options.dependencyValidation || isString;
+        this.pluginValidation = options.pluginValidation || isString;
         this.moduleValidation = options.moduleValidation || function (subject) { return ((typeof subject === 'string') && /^[A-Za-z]+\w*$/.test(subject)); };
-        this.bootstrapValidation = function (subject) { return (typeof subject === 'function'); };
 
         this.moduleDir = options.moduleDir || '/app/js/modules/';
         this.moduleBootstrap = options.moduleBootstrap || function (modules) { angular.bootstrap(document, modules); };
@@ -87,21 +98,18 @@
         this.getDependencies = function () { return Array.prototype.slice.call(dependencies, 0); };
         this.getPlugins = function () { return Array.prototype.slice.call(plugins, 0); };
         this.getModules = function () { return Array.prototype.slice.call(modules, 0); };
-        this.getDependencyBootstraps = function () { return dependencyBootstraps; };
-        this.getPluginBootstraps = function () { return pluginBootstraps; };
 
-        this.registerDependency = generateRegistration(dependencies, this.dependencyValidation);
-        this.registerPlugin = generateRegistration(plugins, this.pluginValidation);
-        this.registerModule = generateRegistration(modules, this.moduleValidation);
         this.getDependencyBootstraps = function () { return dependencyBootstraps; };
         this.getPluginBootstraps = function () { return pluginBootstraps; };
+        this.getPostLoadBootstraps = function () { return postLoadBootstraps; };
 
         this.registerDependency = generateRegistration(dependencies, this.dependencyValidation);
         this.registerPlugin = generateRegistration(plugins, this.pluginValidation);
         this.registerModule = generateRegistration(modules, this.moduleValidation);
 
-        this.registerDependencyBootstrap = generateRegistration(dependencyBootstraps, this.bootstrapValidation);
-        this.registerPluginBootstrap = generateRegistration(pluginBootstraps, this.bootstrapValidation);
+        this.registerDependencyBootstrap = generateRegistration(dependencyBootstraps, isFunction);
+        this.registerPluginBootstrap = generateRegistration(pluginBootstraps, isFunction);
+        this.registerPostLoadBootstrap = generateRegistration(postLoadBootstraps, isFunction);
     }
 
     Ignition.fn = Ignition.prototype;
@@ -117,7 +125,6 @@
         var i,
             modules = this.getModules(),
             moduleSources = [];
-
         for (i = 0; i < modules.length; i++) {
             moduleSources.push(this.getModulePath(modules[i], this.moduleDir));
         }
@@ -136,25 +143,30 @@
         registerMulti(this.registerPlugin, plugin);
     };
 
-    Ignition.fn.dependencyBootstrap = function () {
-        execFunctionQueue(this.getDependencyBootstraps(), this);
+    Ignition.fn.registerDependencyBootstraps = function (bootstrap) {
+        registerMulti(this.registerDependencyBootstrap, bootstrap);
     };
 
-    Ignition.fn.pluginBootstrap = function () {
-        execFunctionQueue(this.getPluginBootstraps(), this);
+    Ignition.fn.registerPluginBootstraps = function (bootstrap) {
+        registerMulti(this.registerPluginBootstrap, bootstrap);
+    };
+
+    Ignition.fn.registerPostLoadBootstraps = function (bootstrap) {
+        registerMulti(this.registerPostLoadBootstrap, bootstrap);
     };
 
     Ignition.fn.load = function () {
         var ignition = this;
         if (!$LAB) throw new IgnitionError('$LAB not found.');
         $LAB.script(this.getDependencies).wait(function () {
-                ignition.dependencyBootstrap();
+                execFunctionQueue(ignition.getDependencyBootstraps());
             })
             .script(this.getPlugins).wait(function () {
-                ignition.pluginBootstrap();
+                execFunctionQueue(ignition.getPluginBootstraps());
             })
             .script(this.getModuleSources()).wait(function () {
                 ignition.moduleBootstrap(ignition.getModules());
+                execFunctionQueue(ignition.getPostLoadBootstraps());
             });
     };
 
