@@ -113,13 +113,15 @@ bower install ignition
 ```js
 // when you instantiate ignition, you can pass an options object...
 var ignition = new Ignition({
-        // `moduleDir` sets the base modules directory
-        moduleDir: '/js/modules',
-        // `moduleValidation` is a predicate function which will is used to validate module names
-        moduleValidation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); },
-        // `moduleBootstrap` overrides the default angular bootstrap callback
-        moduleBootstrap: function (modules) {
-            angular.bootstrap(document.getElementById('app'), modules);
+        modules: {
+            // `modules.dir` sets the base modules directory
+            dir: '/js/modules',
+            // `modules.validation` is a predicate function which will is used to validate module names
+            validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); },
+            // `modules.bootstrap` overrides the default angular bootstrap callback
+            bootstrap: function (modules) {
+                angular.bootstrap(document.getElementById('app'), modules);
+            }
         }
     });
 ```
