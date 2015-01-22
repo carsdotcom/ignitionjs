@@ -1,6 +1,6 @@
-# IgnitionJS v2.0.7
+# IgnitionJS v3.0.0
 
-IgnitionJS is an opinionated, yet flexible, module loader/bootstrapper for AngularJS (though it can be configured to run any bootstrap code you require). IgnitionJS depends on LABjs for script loading. While not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS, ignition provides a simple and efficient alternative to these systems and makes AngularJS bootstrapping considerations a breeze.
+IgnitionJS is a fast and flexible, module loader/bootstrapper for AngularJS. IgnitionJS depends on LABjs for script loading. While not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS, ignition provides a simple and efficient alternative to these systems and makes AngularJS bootstrapping and script loading considerations a breeze.
 
 ## Project Structure Requirements
 
@@ -62,11 +62,11 @@ bower install ignition
         <script src="js/vendor/ignition/ignition.min.js" />
         <script>
             var ignition = new Ignition();
-            ignition.registerDependencies([
+            ignition.tier1.registerSrcs([
                 'js/vendor/angular/angular.min.js',
                 'js/vendor/lodash/lodash.min.js'
             ]);
-            ignition.registerModules([
+            ignition.modules.register([
                 'common',
                 'user'
             ]);
@@ -91,8 +91,8 @@ bower install ignition
         contains will work.
         -->
         <script>
-            ignition.registerDependency('//connect.facebook.net/en_US/sdk.js#xfbml=1');
-            ignition.registerModule('social');
+            ignition.tier1.registerSrc('//connect.facebook.net/en_US/sdk.js#xfbml=1');
+            ignition.modules.register('social');
         </script>
         <my-social-directive></my-social-directive>
 

@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v2.0.7 <https://github.com/carsdotcom>
+ * IgnitionJS v3.0.0 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -7,8 +7,8 @@
  * @requires LABjs 2.0.3 <http://labjs.com/>.
  */
 (function () {
-
     var isString,
+        isNumber,
         isFunction,
         isObject,
         isArray;
@@ -22,11 +22,17 @@
     function generateTypeValidation(type) {
         return function (subject, throwError) {
             var subjectType = typeof subject,
-                isArray = (subjectType === 'object') ? Object.prototype.toString.call(subject) === '[object Array]' : false,
+                isNull = false,
+                isArray = false,
                 isValid = true;
-            if (type === 'array') {
-                if (!isArray) isValid = false;
-            } else if (type === 'object' && isArray) {
+            if (subjectType === 'object' && !(isNull = subject === null)) {
+                isArray = Object.prototype.toString.call(subject) === '[object Array]';
+            }
+            if (type === 'number') {
+                isValid = (!isNaN(subject) && subjectType === type);
+            } else if (type === 'array') {
+                isValid = isArray;
+            } else if (type === 'object' && (isArray || isNull)) {
                 isValid = false;
             } else if (subjectType !== type) {
                 isValid = false;
@@ -37,6 +43,7 @@
     };
 
     isString = generateTypeValidation('string');
+    isNumber = generateTypeValidation('number');
     isFunction = generateTypeValidation('function');
     isObject = generateTypeValidation('object');
     isArray = generateTypeValidation('array');
@@ -51,8 +58,8 @@
             spaces = / +?/g;
             item = item.toString().replace(spaces, '');
             for (i = 0; i < collection.length; i++) {
-                if (typeof collection[i] === 'function') {
-                    if (collection[i].toString().replace(spaces, '') === item) return true;
+                if (typeof collection[i] === 'function' && collection[i].toString().replace(spaces, '') === item) {
+                    return true;
                 }
             }
         }
@@ -82,45 +89,105 @@
     };
 
     function Ignition(options) {
-        var dependencies = [],
-            plugins = [],
-            modules = [],
-            dependencyBootstraps = [],
-            pluginBootstraps = [],
-            postLoadBootstraps = [];
+        var ig = this,
+            t = 0,
+            tiers = 3,
+            tierKey,
+            defaults = {
+                modules: {
+                    validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z]+\w*$/.test(subject)); },
+                    dir: '/app/js/modules/',
+                    bootstrap: function (modules) { angular.bootstrap(document, modules); }
+                }
+            };
 
-        options = isObject(options) ? options : {};
+        options = (function extend(target) {
+            var i, from, j;
+            for (i = 1; i < arguments.length; ++i) {
+                from = arguments[i];
+                if (typeof from !== 'object') continue;
+                for (j in from) {
+                    if (from.hasOwnProperty(j)) {
+                        target[j] = isObject(from[j]) ? extend({}, target[j], from[j]) : from[j];
+                    }
+                }
+            }
+            return target;
+        }({}, defaults, options));
 
-        this.dependencyValidation = options.dependencyValidation || isString;
-        isFunction(this.dependencyValidation, true);
+        ig.tiers = options.tiers || tiers;
+        isNumber(ig.tiers, true);
 
-        this.pluginValidation = options.pluginValidation || isString;
-        isFunction(this.pluginValidation, true);
+        function getSrcs() {
+            return Array.prototype.slice.call(this.srcs, 0);
+        };
+        function getFns() {
+            return Array.prototype.slice.call(this.fns, 0);
+        };
+        function registerSrcs(srcs) {
+            ig._registerMulti(this.registerSrc, srcs);
+        };
+        function registerFns(fns) {
+            ig._registerMulti(this.registerFn, fns);
+        };
+        for (t; t < tiers; t++) {
+            tierKey = 'tier' + t;
+            ig[tierKey] = {};
+            ig[tierKey].validation = (options[tierKey] && options[tierKey].validation) ? options[tierKey].validation : isString;
+            ig[tierKey].fns = [];
+            ig[tierKey].srcs = [];
+            isFunction(ig[tierKey].validation, true);
+            ig[tierKey].getSrcs = getSrcs;
+            ig[tierKey].getFns = getFns;
+            ig[tierKey].registerSrc = generateRegistration(ig[tierKey].srcs, ig[tierKey].validation);
+            ig[tierKey].registerFn = generateRegistration(ig[tierKey].fns, isFunction);
+            ig[tierKey].registerSrcs = registerSrcs;
+            ig[tierKey].registerFns = registerFns;
+        }
 
-        this.moduleValidation = options.moduleValidation || function (subject) { return ((typeof subject === 'string') && /^[A-Za-z]+\w*$/.test(subject)); };
-        isFunction(this.moduleValidation, true);
+        ig.ready = {
+            fns: []
+        };
+        ig.ready.getFns = getFns;
+        ig.ready.registerFn = generateRegistration(ig.ready.fns, isFunction);
+        ig.ready.registerFns = function (fns) {
+            ig._registerMulti(this.registerFn, fns);
+        };
 
-        this.moduleDir = options.moduleDir || '/app/js/modules/';
-        isString(this.moduleDir, true);
+        ig.modules = {
+            names: [],
+            validation: options.modules.validation,
+            dir: options.modules.dir,
+            bootstrap: options.modules.bootstrap
+        };
+        isFunction(ig.modules.validation, true);
+        isString(ig.modules.dir, true);
+        isFunction(ig.modules.bootstrap, true);
 
-        this.moduleBootstrap = options.moduleBootstrap || function (modules) { angular.bootstrap(document, modules); };
-        isFunction(this.moduleBootstrap, true);
+        ig.modules.registerOne = generateRegistration(ig.modules.names, ig.modules.validation);
+        ig.modules.registerMany = function (modules) {
+            ig._registerMulti(this.registerOne, modules);
+        };
+        ig.modules.register = function (subject) {
+            if (isString(subject)) {
+                ig.modules.registerOne(subject);
+            } else if (isArray(subject)) {
+                ig.modules.registerMany(subject);
+            } else {
+                throw new IgnitionError('Expected `array` or `string` and instead received `' + typeof subject + '`');
+            }
+        };
 
-        this.getDependencies = function () { return Array.prototype.slice.call(dependencies, 0); };
-        this.getPlugins = function () { return Array.prototype.slice.call(plugins, 0); };
-        this.getModules = function () { return Array.prototype.slice.call(modules, 0); };
-
-        this.getDependencyBootstraps = function () { return dependencyBootstraps; };
-        this.getPluginBootstraps = function () { return pluginBootstraps; };
-        this.getPostLoadBootstraps = function () { return postLoadBootstraps; };
-
-        this.registerDependency = generateRegistration(dependencies, this.dependencyValidation);
-        this.registerPlugin = generateRegistration(plugins, this.pluginValidation);
-        this.registerModule = generateRegistration(modules, this.moduleValidation);
-
-        this.registerDependencyBootstrap = generateRegistration(dependencyBootstraps, isFunction);
-        this.registerPluginBootstrap = generateRegistration(pluginBootstraps, isFunction);
-        this.registerPostLoadBootstrap = generateRegistration(postLoadBootstraps, isFunction);
+        ig.modules.getNames = function () { return Array.prototype.slice.call(this.names, 0); };
+        ig.modules.getSrcs = function () {
+            var i,
+                modules = this.getNames(),
+                moduleSrcs = [];
+            for (i = 0; i < modules.length; i++) {
+                moduleSrcs.push(ig.buildModulePath(modules[i], this.dir));
+            }
+            return moduleSrcs;
+        };
     }
 
     Ignition.fn = Ignition.prototype;
@@ -134,60 +201,28 @@
     Ignition.fn._registerMulti = registerMulti;
     Ignition.fn._execFunctionQueue = execFunctionQueue;
 
-    Ignition.fn.getModulePath = function (name, baseDir) {
+    Ignition.fn.buildModulePath = function (name, baseDir) {
         if (baseDir.substr(-1) !== '/') {
             baseDir += '/';
         }
         return baseDir + name + '/' + name + '.js';
     };
 
-    Ignition.fn.getModuleSources = function () {
-        var i,
-            modules = this.getModules(),
-            moduleSources = [];
-        for (i = 0; i < modules.length; i++) {
-            moduleSources.push(this.getModulePath(modules[i], this.moduleDir));
-        }
-        return moduleSources;
-    };
-
-    Ignition.fn.registerModules = function (modules) {
-        this._registerMulti(this.registerModule, modules);
-    };
-
-    Ignition.fn.registerDependencies = function (dependency) {
-        this._registerMulti(this.registerDependency, dependency);
-    };
-
-    Ignition.fn.registerPlugins = function (plugin) {
-        this._registerMulti(this.registerPlugin, plugin);
-    };
-
-    Ignition.fn.registerDependencyBootstraps = function (bootstrap) {
-        this._registerMulti(this.registerDependencyBootstrap, bootstrap);
-    };
-
-    Ignition.fn.registerPluginBootstraps = function (bootstrap) {
-        this._registerMulti(this.registerPluginBootstrap, bootstrap);
-    };
-
-    Ignition.fn.registerPostLoadBootstraps = function (bootstrap) {
-        this._registerMulti(this.registerPostLoadBootstrap, bootstrap);
-    };
 
     Ignition.fn.load = function () {
-        var ignition = this;
+        /* eslint no-loop-func: 0 */
+        var ig = this, t = 0, tierKey, labChain = $LAB;
         if (!$LAB) throw new IgnitionError('$LAB not found.');
-        $LAB.script(this.getDependencies).wait(function () {
-                ignition._execFunctionQueue(ignition.getDependencyBootstraps());
-            })
-            .script(this.getPlugins).wait(function () {
-                ignition._execFunctionQueue(ignition.getPluginBootstraps());
-            })
-            .script(this.getModuleSources()).wait(function () {
-                ignition.moduleBootstrap(ignition.getModules());
-                ignition._execFunctionQueue(ignition.getPostLoadBootstraps());
+        for (t; t < ig.tiers; t++) {
+            tierKey = 'tier' + t;
+            labChain = labChain.script(ig[tierKey].getSrcs).wait(function () {
+                ig._execFunctionQueue(ig[tierKey].getFns());
             });
+        }
+        labChain.script(ig.modules.getSrcs()).wait(function () {
+            ig.modules.bootstrap(ig.modules.getNames());
+            ig._execFunctionQueue(ig.ready.getFns());
+        });
     };
 
     window.Ignition = Ignition;

@@ -15,19 +15,23 @@ describe('an ignition instance', function () {
     });
 
     describe('when instantiated with an options object', function () {
-        describe('the dependencyValidation property', function () {
+        describe('the tier1.validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
                 ignition = new Ignition({
-                    dependencyValidation: option
+                    tier1: {
+                        validation: option
+                    }
                 });
-                expect(ignition.dependencyValidation).toEqual(option);
+                expect(ignition.tier1.validation).toEqual(option);
             });
             it('will throw if value is not of type `function`', function () {
                 var option = 'foo';
                 expect(function () {
                     ignition = new Ignition({
-                        dependencyValidation: option
+                        tier1: {
+                            validation: option
+                        }
                     });
                 }).toThrow();
             });
@@ -36,66 +40,82 @@ describe('an ignition instance', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
                 ignition = new Ignition({
-                    pluginValidation: option
+                    tier2: {
+                        validation: option
+                    }
                 });
-                expect(ignition.pluginValidation).toEqual(option);
+                expect(ignition.tier2.validation).toEqual(option);
             });
             it('will throw if value is not of type `function`', function () {
                 var option = 'foo';
                 expect(function () {
                     ignition = new Ignition({
-                        pluginValidation: option
+                        tier2: {
+                            validation: option
+                        }
                     });
                 }).toThrow();
             });
         });
-        describe('the moduleValidation property', function () {
+        describe('the modules.validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
                 ignition = new Ignition({
-                    moduleValidation: option
+                    modules: {
+                        validation: option
+                    }
                 });
-                expect(ignition.moduleValidation).toEqual(option);
+                expect(ignition.modules.validation).toEqual(option);
             });
             it('will throw if value is not of type `function`', function () {
                 var option = 'foo';
                 expect(function () {
                     ignition = new Ignition({
-                        moduleValidation: option
+                        modules: {
+                            validation: option
+                        }
                     });
                 }).toThrow();
             });
         });
-        describe('the moduleDir property', function () {
+        describe('the modules.dir property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 var option = 'foo';
                 ignition = new Ignition({
-                    moduleDir: option
+                    modules: {
+                        dir: option
+                    }
                 });
-                expect(ignition.moduleDir).toEqual(option);
+                expect(ignition.modules.dir).toEqual(option);
             });
             it('will throw if value is not of type `string`', function () {
                 function option() {};
                 expect(function () {
                     ignition = new Ignition({
-                        moduleDir: option
+                        modules: {
+                            dir: option
+                        }
                     });
                 }).toThrow();
             });
         });
-        describe('the moduleBootstrap property', function () {
+        describe('the modules.bootstrap property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {};
                 ignition = new Ignition({
-                    moduleBootstrap: option
+                    modules: {
+                        bootstrap: option
+                    }
                 });
-                expect(ignition.moduleBootstrap).toEqual(option);
+                expect(ignition.modules.bootstrap).toEqual(option);
             });
             it('will throw if value is not of type `function`', function () {
                 var option = 'foo';
                 expect(function () {
                     ignition = new Ignition({
-                        moduleBootstrap: option
+                        modules: {
+                            bootstrap: option
+                        }
                     });
                 }).toThrow();
             });
@@ -281,232 +301,218 @@ describe('an ignition instance', function () {
         });
     });
 
-    describe('#getModules', function () {
+    describe('#modules.getNames', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.getModules).toEqual(jasmine.any(Function));
+            expect(ignition.modules.getNames).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('should return an array', function () {
-                var modules = ignition.getModules();
+                var modules = ignition.modules.getNames();
                 expect(modules).toEqual(jasmine.any(Object));
                 expect(modules.length).toEqual(jasmine.any(Number));
             });
         });
     });
 
-    describe('#getModuleSources', function () {
+    describe('#modules.getSrcs', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.getModuleSources).toEqual(jasmine.any(Function));
+            expect(ignition.modules.getSrcs).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
-            it('should return an array of the same length as getModules', function () {
+            it('should return an array of the same length as modules.getNames', function () {
                 var arr, moduleSources;
                 arr = [ 'foo', 'bar', 'baz' ];
-                spyOn(ignition, 'getModules').and.callFake(function () {
+                spyOn(ignition.modules, 'getNames').and.callFake(function () {
                     return arr;
                 });
-                moduleSources = ignition.getModuleSources();
+                moduleSources = ignition.modules.getSrcs();
                 expect(moduleSources).toEqual(jasmine.any(Object));
                 expect(moduleSources.length).toEqual(arr.length);
             });
         });
     });
 
-    describe('#registerModule', function () {
+    describe('#modules.registerOne', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.registerModule).toEqual(jasmine.any(Function));
+            expect(ignition.modules.registerOne).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('with a valid module name which hasn\'t already been added should add the module to the modules array', function () {
-                ignition.registerModule('foo');
-                expect(ignition.getModules().indexOf('foo') >= 0).toEqual(true);
-                expect(ignition.getModules().length === 1).toEqual(true);
+                ignition.modules.registerOne('foo');
+                expect(ignition.modules.getNames().indexOf('foo') >= 0).toEqual(true);
+                expect(ignition.modules.getNames().length === 1).toEqual(true);
             });
             it('with a valid module name which has already been added should not add the module to the modules array', function () {
-                ignition.registerModule('foo');
-                ignition.registerModule('foo');
-                expect(ignition.getModules().length === 1).toEqual(true);
+                ignition.modules.registerOne('foo');
+                ignition.modules.registerOne('foo');
+                expect(ignition.modules.getNames().length === 1).toEqual(true);
             });
             it('with a invalid module name should throw an error', function () {
-                expect(function () { ignition.registerModule('$foo'); }).toThrow();
-                expect(function () { ignition.registerModule(1); }).toThrow();
-                expect(function () { ignition.registerModule([]); }).toThrow();
-                expect(function () { ignition.registerModule({}); }).toThrow();
-                expect(function () { ignition.registerModule(function () {}); }).toThrow();
+                expect(function () { ignition.modules.registerOne('$foo'); }).toThrow();
+                expect(function () { ignition.modules.registerOne(1); }).toThrow();
+                expect(function () { ignition.modules.registerOne([]); }).toThrow();
+                expect(function () { ignition.modules.registerOne({}); }).toThrow();
+                expect(function () { ignition.modules.registerOne(function () {}); }).toThrow();
             });
         });
     });
 
-    describe('#registerModules', function () {
+    describe('#modules.registerMany', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.registerModules).toEqual(jasmine.any(Function));
+            expect(ignition.modules.registerMany).toEqual(jasmine.any(Function));
         });
-        it('should call _registerMulti with registerModule and an array', function () {
+        it('should call _registerMulti with modules.registerOne and an array', function () {
             var arr = [ 'foo', 'bar' ];
             spyOn(ignition, '_registerMulti');
-            ignition.registerModules(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.registerModule, arr);
+            ignition.modules.registerMany(arr);
+            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.modules.registerOne, arr);
         });
     });
 
-    describe('#getDependencies', function () {
+    describe('#modules.register', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.getDependencies).toEqual(jasmine.any(Function));
+            expect(ignition.modules.register).toEqual(jasmine.any(Function));
+        });
+        describe('if called with a string', function () {
+            it('should call modules.registerOne the given string', function () {
+                var str = 'foo';
+                spyOn(ignition.modules, 'registerOne');
+                ignition.modules.register(str);
+                expect(ignition.modules.registerOne).toHaveBeenCalledWith(str);
+            });
+        });
+        describe('if called with an array', function () {
+            it('should call modules.registerMany the given array', function () {
+                var arr = [ 'foo', 'bar' ];
+                spyOn(ignition.modules, 'registerMany');
+                ignition.modules.register(arr);
+                expect(ignition.modules.registerMany).toHaveBeenCalledWith(arr);
+            });
+        });
+        describe('if called with a type other than a string or an array', function () {
+            it('should throw', function () {
+                function otherType() {};
+                expect(function () {
+                    ignition.modules.register(otherType);
+                }).toThrow();
+            });
+        });
+    });
+
+    describe('#tier1.getSrcs', function () {
+        beforeEach(function () {
+            ignition = new Ignition();
+        });
+        it('should be a function', function () {
+            expect(ignition.tier1.getSrcs).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('should return an array', function () {
-                var dependencies = ignition.getDependencies();
-                expect(dependencies).toEqual(jasmine.any(Object));
-                expect(dependencies.length).toEqual(jasmine.any(Number));
+                var srcs = ignition.tier1.getSrcs();
+                expect(srcs).toEqual(jasmine.any(Object));
+                expect(srcs.length).toEqual(jasmine.any(Number));
             });
         });
     });
 
-    describe('#registerDependency', function () {
+    describe('#tier1.registerSrc', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.registerDependency).toEqual(jasmine.any(Function));
+            expect(ignition.tier1.registerSrc).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
-            it('with a string which hasn\'t already been added should add the string to the dependencies array', function () {
-                ignition.registerDependency('foo');
-                expect(ignition.getDependencies().indexOf('foo') >= 0).toEqual(true);
-                expect(ignition.getDependencies().length === 1).toEqual(true);
+            it('with a string which hasn\'t already been added should add the string to the sources array', function () {
+                ignition.tier1.registerSrc('foo');
+                expect(ignition.tier1.getSrcs().indexOf('foo') >= 0).toEqual(true);
+                expect(ignition.tier1.getSrcs().length === 1).toEqual(true);
             });
-            it('with a string which has already been added should not add the string to the dependencies array', function () {
-                ignition.registerDependency('foo');
-                ignition.registerDependency('foo');
-                expect(ignition.getDependencies().length === 1).toEqual(true);
+            it('with a string which has already been added should not add the string to the sources array', function () {
+                ignition.tier1.registerSrc('foo');
+                ignition.tier1.registerSrc('foo');
+                expect(ignition.tier1.getSrcs().length === 1).toEqual(true);
             });
             it('with something other than a string should throw an error', function () {
-                expect(function () { ignition.registerDependency(1); }).toThrow();
-                expect(function () { ignition.registerDependency([]); }).toThrow();
-                expect(function () { ignition.registerDependency({}); }).toThrow();
-                expect(function () { ignition.registerDependency(function () {}); }).toThrow();
+                expect(function () { ignition.tier1.registerSrc(1); }).toThrow();
+                expect(function () { ignition.tier1.registerSrc([]); }).toThrow();
+                expect(function () { ignition.tier1.registerSrc({}); }).toThrow();
+                expect(function () { ignition.tier1.registerSrc(function () {}); }).toThrow();
             });
         });
     });
 
-    describe('#registerDependencies', function () {
+    describe('#tier1.registerSrcs', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.registerDependencies).toEqual(jasmine.any(Function));
+            expect(ignition.tier1.registerSrcs).toEqual(jasmine.any(Function));
         });
-        it('should call _registerMulti with registerDependency and an array', function () {
+        it('should call _registerMulti with tier1.registerSrc and an array', function () {
             var arr = [ 'foo', 'bar' ];
             spyOn(ignition, '_registerMulti');
-            ignition.registerDependencies(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.registerDependency, arr);
+            ignition.tier1.registerSrcs(arr);
+            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.tier1.registerSrc, arr);
         });
     });
 
-    describe('#registerPlugins', function () {
+    describe('#tier1.registerFns', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.registerPlugins).toEqual(jasmine.any(Function));
+            expect(ignition.tier1.registerFns).toEqual(jasmine.any(Function));
         });
-        it('should call _registerMulti with registerPlugin and an array', function () {
+        it('should call _registerMulti with tier1.registerFn and an array', function () {
             var arr = [ 'foo', 'bar' ];
             spyOn(ignition, '_registerMulti');
-            ignition.registerPlugins(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.registerPlugin, arr);
+            ignition.tier1.registerFns(arr);
+            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.tier1.registerFn, arr);
         });
     });
 
-    describe('#registerDependencyBootstraps', function () {
+    describe('#ready.registerFns', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.registerDependencyBootstraps).toEqual(jasmine.any(Function));
+            expect(ignition.ready.registerFns).toEqual(jasmine.any(Function));
         });
-        it('should call _registerMulti with registerDependencyBootstrap and an array', function () {
+        it('should call _registerMulti with ready.registerFn and an array', function () {
             var arr = [ 'foo', 'bar' ];
             spyOn(ignition, '_registerMulti');
-            ignition.registerDependencyBootstraps(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.registerDependencyBootstrap, arr);
+            ignition.ready.registerFns(arr);
+            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.ready.registerFn, arr);
         });
     });
 
-    describe('#registerPluginBootstraps', function () {
+    describe('#buildModulePath', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.registerPluginBootstraps).toEqual(jasmine.any(Function));
-        });
-        it('should call _registerMulti with registerPluginBootstrap and an array', function () {
-            var arr = [ 'foo', 'bar' ];
-            spyOn(ignition, '_registerMulti');
-            ignition.registerPluginBootstraps(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.registerPluginBootstrap, arr);
-        });
-    });
-
-    describe('#registerPostLoadBootstraps', function () {
-        beforeEach(function () {
-            ignition = new Ignition();
-        });
-        it('should be a function', function () {
-            expect(ignition.registerPostLoadBootstraps).toEqual(jasmine.any(Function));
-        });
-        it('should call _registerMulti with registerPostLoadBootstrap and an array', function () {
-            var arr = [ 'foo', 'bar' ];
-            spyOn(ignition, '_registerMulti');
-            ignition.registerPostLoadBootstraps(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.registerPostLoadBootstrap, arr);
-        });
-    });
-
-    describe('#getPlugins', function () {
-        beforeEach(function () {
-            ignition = new Ignition();
-        });
-        it('should be a function', function () {
-            expect(ignition.getPlugins).toEqual(jasmine.any(Function));
-        });
-        describe('when called', function () {
-            it('should return an array', function () {
-                var plugins = ignition.getPlugins();
-                expect(plugins).toEqual(jasmine.any(Object));
-                expect(plugins.length).toEqual(jasmine.any(Number));
-            });
-        });
-    });
-
-
-    describe('#getModulePath', function () {
-        beforeEach(function () {
-            ignition = new Ignition();
-        });
-        it('should be a function', function () {
-            expect(ignition.getModulePath).toEqual(jasmine.any(Function));
+            expect(ignition.buildModulePath).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('with a base directory and module name should return a formatted module path', function () {
-                expect(ignition.getModulePath('name', 'base/')).toEqual('base/name/name.js');
-                expect(ignition.getModulePath('name', 'base')).toEqual('base/name/name.js');
+                expect(ignition.buildModulePath('name', 'base/')).toEqual('base/name/name.js');
+                expect(ignition.buildModulePath('name', 'base')).toEqual('base/name/name.js');
             });
         });
     });
@@ -529,14 +535,14 @@ describe('an ignition instance', function () {
                 expect($LAB.script).toHaveBeenCalledWith(jasmine.any(Function));
             });
             it('should call moduleBootstrap once', function () {
-                spyOn(ignition, 'moduleBootstrap').and.callThrough();
+                spyOn(ignition.modules, 'bootstrap').and.callThrough();
                 ignition.load();
-                expect(ignition.moduleBootstrap.calls.count()).toEqual(1);
+                expect(ignition.modules.bootstrap.calls.count()).toEqual(1);
             });
             it('should call _execFunctionQueue three times', function () {
                 spyOn(ignition, '_execFunctionQueue').and.callThrough();
                 ignition.load();
-                expect(ignition._execFunctionQueue.calls.count()).toEqual(3);
+                expect(ignition._execFunctionQueue.calls.count()).toEqual(4);
             });
         });
     });
