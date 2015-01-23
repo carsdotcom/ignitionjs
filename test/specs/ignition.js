@@ -24,6 +24,24 @@ describe('an ignition instance', function () {
             ignition = new Ignition(options);
             expect(ignition.foo).toEqual(undefined);
         });
+        describe('the tier1.aliases property', function () {
+            it('will set a corresponding property on the ignition instance object for each item in the aliases array', function () {
+                ignition = new Ignition({
+                    tier1: {
+                        aliases: [ 'foo' ]
+                    }
+                });
+                expect(ignition.foo).toEqual(ignition.tier1);
+            });
+            it('will not set a corresponding property on the ignition instance object for any property which is already defined', function () {
+                ignition = new Ignition({
+                    tier1: {
+                        aliases: [ 'ready' ]
+                    }
+                });
+                expect(ignition.ready).not.toEqual(ignition.tier1);
+            });
+        });
         describe('the tier1.validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
@@ -34,18 +52,8 @@ describe('an ignition instance', function () {
                 });
                 expect(ignition.tier1.validation).toEqual(option);
             });
-            it('will throw if value is not of type `function`', function () {
-                var option = 'foo';
-                expect(function () {
-                    ignition = new Ignition({
-                        tier1: {
-                            validation: option
-                        }
-                    });
-                }).toThrow();
-            });
         });
-        describe('the pluginValidation property', function () {
+        describe('the tier2.validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
                 ignition = new Ignition({
@@ -54,16 +62,6 @@ describe('an ignition instance', function () {
                     }
                 });
                 expect(ignition.tier2.validation).toEqual(option);
-            });
-            it('will throw if value is not of type `function`', function () {
-                var option = 'foo';
-                expect(function () {
-                    ignition = new Ignition({
-                        tier2: {
-                            validation: option
-                        }
-                    });
-                }).toThrow();
             });
         });
         describe('the modules.validation property', function () {
@@ -511,17 +509,17 @@ describe('an ignition instance', function () {
         });
     });
 
-    describe('#buildModulePath', function () {
+    describe('#_buildModulePath', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.buildModulePath).toEqual(jasmine.any(Function));
+            expect(ignition._buildModulePath).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('with a base directory and module name should return a formatted module path', function () {
-                expect(ignition.buildModulePath('name', 'base/')).toEqual('base/name/name.js');
-                expect(ignition.buildModulePath('name', 'base')).toEqual('base/name/name.js');
+                expect(ignition._buildModulePath('name', 'base/')).toEqual('base/name/name.js');
+                expect(ignition._buildModulePath('name', 'base')).toEqual('base/name/name.js');
             });
         });
     });

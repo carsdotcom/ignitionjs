@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v3.0.1 <https://github.com/carsdotcom>
+ * IgnitionJS v3.1.0 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -11,7 +11,8 @@
         isNumber,
         isFunction,
         isObject,
-        isArray;
+        isArray,
+        isUndefined;
 
     function IgnitionError(message) {
         this.name = 'IgnitionError';
@@ -47,6 +48,7 @@
     isFunction = generateTypeValidation('function');
     isObject = generateTypeValidation('object');
     isArray = generateTypeValidation('array');
+    isUndefined = generateTypeValidation('undefined');
 
     function isRegistered(collection, item) {
         var i,
@@ -86,13 +88,22 @@
         for (i = 0; i < queue.length; i++) {
             queue[i].call(window);
         }
-    };
+    }
+
+    function buildModulePath(name, baseDir) {
+        if (baseDir.substr(-1) !== '/') {
+            baseDir += '/';
+        }
+        return baseDir + name + '/' + name + '.js';
+    }
 
     function Ignition(options) {
         var ig = this,
-            t = 1,
+            t,
             tiers = 3,
             tierKey,
+            a,
+            aliases,
             defaults = {
                 modules: {
                     validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z]+\w*$/.test(subject)); },
@@ -121,22 +132,32 @@
         function getSrcs() {
             return Array.prototype.slice.call(this.srcs, 0);
         };
+
         function getFns() {
             return Array.prototype.slice.call(this.fns, 0);
         };
+
         function registerSrcs(srcs) {
             ig._registerMulti(this.registerSrc, srcs);
         };
+
         function registerFns(fns) {
             ig._registerMulti(this.registerFn, fns);
         };
-        for (t; t <= tiers; t++) {
+
+        for (t = 1; t <= tiers; t++) {
             tierKey = 'tier' + t;
             ig[tierKey] = {};
-            ig[tierKey].validation = (options[tierKey] && options[tierKey].validation) ? options[tierKey].validation : isString;
+            aliases = (options[tierKey] && isArray(options[tierKey].aliases)) ? options[tierKey].aliases : [];
+            for (a = 0; a < aliases.length; a++) {
+                if (isUndefined(ig[aliases[a]])) {
+                    ig[aliases[a]] = ig[tierKey];
+                    ig[tierKey].aliases = aliases = (options[tierKey] && isArray(options[tierKey].aliases)) ? options[tierKey].aliases : [];
+                }
+            }
+            ig[tierKey].validation = (options[tierKey] && isFunction(options[tierKey].validation)) ? options[tierKey].validation : isString;
             ig[tierKey].fns = [];
             ig[tierKey].srcs = [];
-            isFunction(ig[tierKey].validation, true);
             ig[tierKey].getSrcs = getSrcs;
             ig[tierKey].getFns = getFns;
             ig[tierKey].registerSrc = generateRegistration(ig[tierKey].srcs, ig[tierKey].validation);
@@ -184,7 +205,7 @@
                 modules = this.getNames(),
                 moduleSrcs = [];
             for (i = 0; i < modules.length; i++) {
-                moduleSrcs.push(ig.buildModulePath(modules[i], this.dir));
+                moduleSrcs.push(ig._buildModulePath(modules[i], this.dir));
             }
             return moduleSrcs;
         };
@@ -200,13 +221,7 @@
     Ignition.fn._generateRegistration = generateRegistration;
     Ignition.fn._registerMulti = registerMulti;
     Ignition.fn._execFunctionQueue = execFunctionQueue;
-
-    Ignition.fn.buildModulePath = function (name, baseDir) {
-        if (baseDir.substr(-1) !== '/') {
-            baseDir += '/';
-        }
-        return baseDir + name + '/' + name + '.js';
-    };
+    Ignition.fn._buildModulePath = buildModulePath;
 
     Ignition.fn._loadTier = function (key, chain) {
         var ig = this;
@@ -217,10 +232,10 @@
 
     Ignition.fn.load = function () {
         var ig = this,
-            t = 1,
+            t,
             chain = $LAB;
         if (!$LAB) throw new IgnitionError('$LAB not found.');
-        for (t; t <= ig.tiers; t++) {
+        for (t = 1; t <= ig.tiers; t++) {
             chain = ig._loadTier('tier' + t, chain);
         }
         chain.script(ig.modules.getSrcs()).wait(function () {

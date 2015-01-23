@@ -1,4 +1,4 @@
-# IgnitionJS v3.0.1
+# IgnitionJS v3.1.0
 
 IgnitionJS is a fast and flexible, module loader/bootstrapper for AngularJS. IgnitionJS depends on LABjs for script loading. While not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS, ignition provides a simple and efficient alternative to these systems and makes AngularJS bootstrapping and script loading considerations a breeze.
 
