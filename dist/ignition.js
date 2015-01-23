@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v3.0.0 <https://github.com/carsdotcom>
+ * IgnitionJS v3.0.1 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -90,7 +90,7 @@
 
     function Ignition(options) {
         var ig = this,
-            t = 0,
+            t = 1,
             tiers = 3,
             tierKey,
             defaults = {
@@ -130,7 +130,7 @@
         function registerFns(fns) {
             ig._registerMulti(this.registerFn, fns);
         };
-        for (t; t < tiers; t++) {
+        for (t; t <= tiers; t++) {
             tierKey = 'tier' + t;
             ig[tierKey] = {};
             ig[tierKey].validation = (options[tierKey] && options[tierKey].validation) ? options[tierKey].validation : isString;
@@ -208,18 +208,22 @@
         return baseDir + name + '/' + name + '.js';
     };
 
+    Ignition.fn._loadTier = function (key, chain) {
+        var ig = this;
+        return chain.script(ig[key].getSrcs()).wait(function () {
+            ig._execFunctionQueue(ig[key].getFns());
+        });
+    };
 
     Ignition.fn.load = function () {
-        /* eslint no-loop-func: 0 */
-        var ig = this, t = 0, tierKey, labChain = $LAB;
+        var ig = this,
+            t = 1,
+            chain = $LAB;
         if (!$LAB) throw new IgnitionError('$LAB not found.');
-        for (t; t < ig.tiers; t++) {
-            tierKey = 'tier' + t;
-            labChain = labChain.script(ig[tierKey].getSrcs).wait(function () {
-                ig._execFunctionQueue(ig[tierKey].getFns());
-            });
+        for (t; t <= ig.tiers; t++) {
+            chain = ig._loadTier('tier' + t, chain);
         }
-        labChain.script(ig.modules.getSrcs()).wait(function () {
+        chain.script(ig.modules.getSrcs()).wait(function () {
             ig.modules.bootstrap(ig.modules.getNames());
             ig._execFunctionQueue(ig.ready.getFns());
         });

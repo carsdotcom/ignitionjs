@@ -15,6 +15,15 @@ describe('an ignition instance', function () {
     });
 
     describe('when instantiated with an options object', function () {
+        it('any properties not directly on the options object will be ignored', function () {
+            /* eslint no-undefined: 0 */
+            var StrangeOptionsObj, options, ignition;
+            StrangeOptionsObj = function () {};
+            StrangeOptionsObj.prototype.foo = 'bar';
+            options = new StrangeOptionsObj();
+            ignition = new Ignition(options);
+            expect(ignition.foo).toEqual(undefined);
+        });
         describe('the tier1.validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
@@ -517,6 +526,25 @@ describe('an ignition instance', function () {
         });
     });
 
+    describe('#_loadTier', function () {
+        beforeEach(function () {
+            ignition = new Ignition();
+        });
+        it('should be a function', function () {
+            expect(ignition._loadTier).toEqual(jasmine.any(Function));
+        });
+        describe('when called with a tier key and a $LAB chain', function () {
+            it('should call script with the sources from the tier corresponding to the given tier key', function () {
+                var srcs = [ 'foo', 'bar' ];
+                $LAB = new LabConstructor();
+                ignition.tier1.registerSrcs(srcs);
+                spyOn($LAB, 'script').and.callThrough();
+                ignition._loadTier('tier1', $LAB);
+                expect($LAB.script).toHaveBeenCalledWith(srcs);
+            });
+        });
+    });
+
     describe('#load', function () {
         beforeEach(function () {
             ignition = new Ignition();
@@ -528,18 +556,25 @@ describe('an ignition instance', function () {
             it('should throw if $LAB is not set', function () {
                 $LAB = null;
                 ignition = new Ignition();
+                ignition.tier1.registerSrcs([ 'foo', 'bar' ]);
+                ignition.tier1.registerFn(function () {});
+                ignition.tier2.registerSrcs([ 'foo', 'bar' ]);
+                ignition.tier2.registerFn(function () {});
+                ignition.tier3.registerSrcs([ 'foo', 'bar' ]);
+                ignition.tier3.registerFn(function () {});
                 expect(function () { ignition.load(); }).toThrow();
             });
-            it('should call $LAB.script with an array and then call $LAB.wait with a function', function () {
+            it('should call _loadTier with a string and a $LAB chain', function () {
+                spyOn(ignition, '_loadTier').and.callThrough();
                 ignition.load();
-                expect($LAB.script).toHaveBeenCalledWith(jasmine.any(Function));
+                expect(ignition._loadTier).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(Object));
             });
-            it('should call moduleBootstrap once', function () {
+            it('should call modules.bootstrap once', function () {
                 spyOn(ignition.modules, 'bootstrap').and.callThrough();
                 ignition.load();
                 expect(ignition.modules.bootstrap.calls.count()).toEqual(1);
             });
-            it('should call _execFunctionQueue three times', function () {
+            it('should call _execFunctionQueue four times', function () {
                 spyOn(ignition, '_execFunctionQueue').and.callThrough();
                 ignition.load();
                 expect(ignition._execFunctionQueue.calls.count()).toEqual(4);
