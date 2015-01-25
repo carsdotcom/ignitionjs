@@ -1,4 +1,4 @@
-# IgnitionJS v3.2.0
+# IgnitionJS v3.2.1
 
 IgnitionJS is a fast and flexible, script loader/bootstrapper for AngularJS. IgnitionJS utilizes on LABjs to provide simple mechanisms for non-intrusive dependency management, script loading, and function queueing. IgnitionJS is not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS; instead, it is intended to provide a simple and efficient alternative to these systems with a strong focus on AngularJS.
 
@@ -89,11 +89,11 @@ For the time being, please review the examples below...
 
                         // There are many options available.
                         //
-                        // Here we define the `tier` options property.
+                        // Here we define the `tiers` options property.
 
-                        tier: [
+                        tiers: [
 
-                            // `tier` is an array, each item represents a
+                            // `tiers` is an array, each item represents a
                             // loading & execute tier. Each tier accepts
                             // an options object.
 
@@ -108,7 +108,7 @@ For the time being, please review the examples below...
 
                                 // For example, by defining `libraries` in the
                                 // array below, `ignition.libraries` becomes
-                                // an alias for `ignition.tier[0]`.
+                                // an alias for `ignition.tiers[0]`.
 
                                 aliases: [
                                     'libraries',
@@ -301,7 +301,7 @@ var ignition = new Ignition({
 
         // Dependency tier options
 
-        tier: [
+        tiers: [
             [
 
                 // First tier

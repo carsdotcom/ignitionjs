@@ -24,44 +24,44 @@ describe('an ignition instance', function () {
             ignition = new Ignition(options);
             expect(ignition.foo).toEqual(undefined);
         });
-        describe('the tier[0].aliases property', function () {
+        describe('the tiers[0].aliases property', function () {
             it('will set a corresponding property on the ignition instance object for each item in the aliases array', function () {
                 ignition = new Ignition({
-                    tier: [{
+                    tiers: [{
                         aliases: [ 'foo' ]
                     }]
                 });
-                expect(ignition.foo).toEqual(ignition.tier[0]);
+                expect(ignition.foo).toEqual(ignition.tiers[0]);
             });
             it('will not set a corresponding property on the ignition instance object for any property which is already defined', function () {
                 ignition = new Ignition({
-                    tier: [{
+                    tiers: [{
                         aliases: [ 'ready' ]
                     }]
                 });
-                expect(ignition.ready).not.toEqual(ignition.tier[0]);
+                expect(ignition.ready).not.toEqual(ignition.tiers[0]);
             });
         });
-        describe('the tier[0].validation property', function () {
+        describe('the tiers[0].validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
                 ignition = new Ignition({
-                    tier: [{
+                    tiers: [{
                         validation: option
                     }]
                 });
-                expect(ignition.tier[0].validation).toEqual(option);
+                expect(ignition.tiers[0].validation).toEqual(option);
             });
         });
-        describe('the tier[1].validation property', function () {
+        describe('the tiers[1].validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
                 ignition = new Ignition({
-                    tier: [{},{
+                    tiers: [{},{
                         validation: option
                     }]
                 });
-                expect(ignition.tier[1].validation).toEqual(option);
+                expect(ignition.tiers[1].validation).toEqual(option);
             });
         });
         describe('the modules.validation property', function () {
@@ -421,76 +421,76 @@ describe('an ignition instance', function () {
         });
     });
 
-    describe('#tier[0].getSrcs', function () {
+    describe('#tiers[0].getSrcs', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.tier[0].getSrcs).toEqual(jasmine.any(Function));
+            expect(ignition.tiers[0].getSrcs).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('should return an array', function () {
-                var srcs = ignition.tier[0].getSrcs();
+                var srcs = ignition.tiers[0].getSrcs();
                 expect(srcs).toEqual(jasmine.any(Object));
                 expect(srcs.length).toEqual(jasmine.any(Number));
             });
         });
     });
 
-    describe('#tier[0].registerSrc', function () {
+    describe('#tiers[0].registerSrc', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.tier[0].registerSrc).toEqual(jasmine.any(Function));
+            expect(ignition.tiers[0].registerSrc).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('with a string which hasn\'t already been added should add the string to the sources array', function () {
-                ignition.tier[0].registerSrc('foo');
-                expect(ignition.tier[0].getSrcs().indexOf('foo') >= 0).toEqual(true);
-                expect(ignition.tier[0].getSrcs().length === 1).toEqual(true);
+                ignition.tiers[0].registerSrc('foo');
+                expect(ignition.tiers[0].getSrcs().indexOf('foo') >= 0).toEqual(true);
+                expect(ignition.tiers[0].getSrcs().length === 1).toEqual(true);
             });
             it('with a string which has already been added should not add the string to the sources array', function () {
-                ignition.tier[0].registerSrc('foo');
-                ignition.tier[0].registerSrc('foo');
-                expect(ignition.tier[0].getSrcs().length === 1).toEqual(true);
+                ignition.tiers[0].registerSrc('foo');
+                ignition.tiers[0].registerSrc('foo');
+                expect(ignition.tiers[0].getSrcs().length === 1).toEqual(true);
             });
             it('with something other than a string should throw an error', function () {
-                expect(function () { ignition.tier[0].registerSrc(1); }).toThrow();
-                expect(function () { ignition.tier[0].registerSrc([]); }).toThrow();
-                expect(function () { ignition.tier[0].registerSrc({}); }).toThrow();
-                expect(function () { ignition.tier[0].registerSrc(function () {}); }).toThrow();
+                expect(function () { ignition.tiers[0].registerSrc(1); }).toThrow();
+                expect(function () { ignition.tiers[0].registerSrc([]); }).toThrow();
+                expect(function () { ignition.tiers[0].registerSrc({}); }).toThrow();
+                expect(function () { ignition.tiers[0].registerSrc(function () {}); }).toThrow();
             });
         });
     });
 
-    describe('#tier[0].registerSrcs', function () {
+    describe('#tiers[0].registerSrcs', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.tier[0].registerSrcs).toEqual(jasmine.any(Function));
+            expect(ignition.tiers[0].registerSrcs).toEqual(jasmine.any(Function));
         });
-        it('should call _registerMulti with tier[0].registerSrc and an array', function () {
+        it('should call _registerMulti with tiers[0].registerSrc and an array', function () {
             var arr = [ 'foo', 'bar' ];
             spyOn(ignition, '_registerMulti');
-            ignition.tier[0].registerSrcs(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.tier[0].registerSrc, arr);
+            ignition.tiers[0].registerSrcs(arr);
+            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.tiers[0].registerSrc, arr);
         });
     });
 
-    describe('#tier[0].registerFns', function () {
+    describe('#tiers[0].registerFns', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.tier[0].registerFns).toEqual(jasmine.any(Function));
+            expect(ignition.tiers[0].registerFns).toEqual(jasmine.any(Function));
         });
-        it('should call _registerMulti with tier[0].registerFn and an array', function () {
+        it('should call _registerMulti with tiers[0].registerFn and an array', function () {
             var arr = [ 'foo', 'bar' ];
             spyOn(ignition, '_registerMulti');
-            ignition.tier[0].registerFns(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.tier[0].registerFn, arr);
+            ignition.tiers[0].registerFns(arr);
+            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.tiers[0].registerFn, arr);
         });
     });
 
@@ -535,7 +535,7 @@ describe('an ignition instance', function () {
             it('should call script with the sources from the tier corresponding to the given tier index', function () {
                 var srcs = [ 'foo', 'bar' ];
                 $LAB = new LabConstructor();
-                ignition.tier[0].registerSrcs(srcs);
+                ignition.tiers[0].registerSrcs(srcs);
                 spyOn($LAB, 'script').and.callThrough();
                 ignition._loadTier(0, $LAB);
                 expect($LAB.script).toHaveBeenCalledWith(srcs);
@@ -554,10 +554,10 @@ describe('an ignition instance', function () {
             it('should throw if $LAB is not set', function () {
                 $LAB = null;
                 ignition = new Ignition();
-                ignition.tier[0].registerSrcs([ 'foo', 'bar' ]);
-                ignition.tier[0].registerFn(function () {});
-                ignition.tier[1].registerSrcs([ 'foo', 'bar' ]);
-                ignition.tier[1].registerFn(function () {});
+                ignition.tiers[0].registerSrcs([ 'foo', 'bar' ]);
+                ignition.tiers[0].registerFn(function () {});
+                ignition.tiers[1].registerSrcs([ 'foo', 'bar' ]);
+                ignition.tiers[1].registerFn(function () {});
                 expect(function () { ignition.load(); }).toThrow();
             });
             it('should call _loadTier with a string and a $LAB chain', function () {
