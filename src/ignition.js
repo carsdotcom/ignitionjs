@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v3.1.0 <https://github.com/carsdotcom>
+ * IgnitionJS v3.2.0 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -8,7 +8,6 @@
  */
 (function () {
     var isString,
-        isNumber,
         isFunction,
         isObject,
         isArray,
@@ -29,9 +28,7 @@
             if (subjectType === 'object' && !(isNull = subject === null)) {
                 isArray = Object.prototype.toString.call(subject) === '[object Array]';
             }
-            if (type === 'number') {
-                isValid = (!isNaN(subject) && subjectType === type);
-            } else if (type === 'array') {
+            if (type === 'array') {
                 isValid = isArray;
             } else if (type === 'object' && (isArray || isNull)) {
                 isValid = false;
@@ -41,10 +38,9 @@
             if (!isValid && throwError) throw new IgnitionError('Expected `' + type + '` and instead received `' + subjectType + '`');
             return isValid;
         };
-    };
+    }
 
     isString = generateTypeValidation('string');
-    isNumber = generateTypeValidation('number');
     isFunction = generateTypeValidation('function');
     isObject = generateTypeValidation('object');
     isArray = generateTypeValidation('array');
@@ -60,7 +56,7 @@
             spaces = / +?/g;
             item = item.toString().replace(spaces, '');
             for (i = 0; i < collection.length; i++) {
-                if (typeof collection[i] === 'function' && collection[i].toString().replace(spaces, '') === item) {
+                if (isFunction(collection[i]) && collection[i].toString().replace(spaces, '') === item) {
                     return true;
                 }
             }
@@ -100,13 +96,12 @@
     function Ignition(options) {
         var ig = this,
             t,
-            tiers = 3,
-            tierKey,
             a,
+            hasAliases,
             aliases,
             defaults = {
                 modules: {
-                    validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z]+\w*$/.test(subject)); },
+                    validation: function (subject) { return (isString(subject) && /^[A-Za-z]+\w*$/.test(subject)); },
                     dir: '/app/js/modules/',
                     bootstrap: function (modules) { angular.bootstrap(document, modules); }
                 }
@@ -116,7 +111,7 @@
             var i, from, j;
             for (i = 1; i < arguments.length; ++i) {
                 from = arguments[i];
-                if (typeof from !== 'object') continue;
+                if (!isObject(from)) continue;
                 for (j in from) {
                     if (from.hasOwnProperty(j)) {
                         target[j] = isObject(from[j]) ? extend({}, target[j], from[j]) : from[j];
@@ -126,44 +121,50 @@
             return target;
         }({}, defaults, options));
 
-        ig.tiers = options.tiers || tiers;
-        isNumber(ig.tiers, true);
 
         function getSrcs() {
             return Array.prototype.slice.call(this.srcs, 0);
-        };
+        }
 
         function getFns() {
             return Array.prototype.slice.call(this.fns, 0);
-        };
+        }
 
         function registerSrcs(srcs) {
             ig._registerMulti(this.registerSrc, srcs);
-        };
+        }
 
         function registerFns(fns) {
             ig._registerMulti(this.registerFn, fns);
-        };
+        }
 
-        for (t = 1; t <= tiers; t++) {
-            tierKey = 'tier' + t;
-            ig[tierKey] = {};
-            aliases = (options[tierKey] && isArray(options[tierKey].aliases)) ? options[tierKey].aliases : [];
+        ig.tier = [];
+        if (isArray(options.tier)) {
+            ig.tiers = options.tier.length;
+            options.tier = options.tier;
+        } else {
+            ig.tiers = 2;
+            options.tier = [];
+        }
+        for (t = 0; t < ig.tiers; t++) {
+            ig.tier[t] = {};
+            hasAliases = (options.tier[t] && isArray(options.tier[t].aliases));
+            aliases = hasAliases ? options.tier[t].aliases : [];
             for (a = 0; a < aliases.length; a++) {
                 if (isUndefined(ig[aliases[a]])) {
-                    ig[aliases[a]] = ig[tierKey];
-                    ig[tierKey].aliases = aliases = (options[tierKey] && isArray(options[tierKey].aliases)) ? options[tierKey].aliases : [];
+                    ig[aliases[a]] = ig.tier[t];
+                    ig.tier[t].aliases = aliases = hasAliases ? options.tier[t].aliases : [];
                 }
             }
-            ig[tierKey].validation = (options[tierKey] && isFunction(options[tierKey].validation)) ? options[tierKey].validation : isString;
-            ig[tierKey].fns = [];
-            ig[tierKey].srcs = [];
-            ig[tierKey].getSrcs = getSrcs;
-            ig[tierKey].getFns = getFns;
-            ig[tierKey].registerSrc = generateRegistration(ig[tierKey].srcs, ig[tierKey].validation);
-            ig[tierKey].registerFn = generateRegistration(ig[tierKey].fns, isFunction);
-            ig[tierKey].registerSrcs = registerSrcs;
-            ig[tierKey].registerFns = registerFns;
+            ig.tier[t].validation = (options.tier[t] && isFunction(options.tier[t].validation)) ? options.tier[t].validation : isString;
+            ig.tier[t].fns = [];
+            ig.tier[t].srcs = [];
+            ig.tier[t].getSrcs = getSrcs;
+            ig.tier[t].getFns = getFns;
+            ig.tier[t].registerSrc = generateRegistration(ig.tier[t].srcs, ig.tier[t].validation);
+            ig.tier[t].registerFn = generateRegistration(ig.tier[t].fns, isFunction);
+            ig.tier[t].registerSrcs = registerSrcs;
+            ig.tier[t].registerFns = registerFns;
         }
 
         ig.ready = {
@@ -223,10 +224,10 @@
     Ignition.fn._execFunctionQueue = execFunctionQueue;
     Ignition.fn._buildModulePath = buildModulePath;
 
-    Ignition.fn._loadTier = function (key, chain) {
+    Ignition.fn._loadTier = function (t, chain) {
         var ig = this;
-        return chain.script(ig[key].getSrcs()).wait(function () {
-            ig._execFunctionQueue(ig[key].getFns());
+        return chain.script(ig.tier[t].getSrcs()).wait(function () {
+            ig._execFunctionQueue(ig.tier[t].getFns());
         });
     };
 
@@ -235,8 +236,8 @@
             t,
             chain = $LAB;
         if (!$LAB) throw new IgnitionError('$LAB not found.');
-        for (t = 1; t <= ig.tiers; t++) {
-            chain = ig._loadTier('tier' + t, chain);
+        for (t = 0; t < ig.tiers; t++) {
+            chain = ig._loadTier(t, chain);
         }
         chain.script(ig.modules.getSrcs()).wait(function () {
             ig.modules.bootstrap(ig.modules.getNames());
