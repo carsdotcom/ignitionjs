@@ -2,9 +2,9 @@
 
 IgnitionJS is a fast and flexible, script loader/bootstrapper for AngularJS. IgnitionJS utilizes on LABjs to provide simple mechanisms for non-intrusive dependency management, script loading, and function queueing. IgnitionJS is not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS; instead, it is intended to provide a simple and efficient alternative to these systems with a strong focus on AngularJS.
 
-We built IngitionJS at Cars.com in order to provide a simple framework which addresses the front-end performance challenges that come with running an Enterprise CMS. For example, if we need to be able to run any module on any page, but we don't want to load all of the JS required for any module on every page. IgnitionJS solves this problem through the implemenation of a simple registration system. Any module defined within our CMS can effectively register it's corresponding AngularJS module (along with any dependecies and additional bootstrapping) so that when the page is dynamically generated, it loads exactly what it needs.
+IngitionJS was built to provide a simple framework which addresses the front-end performance challenges that come with running AngularJS atop an enterprise platform. More specifically, it provides a solution for allowing contributors to place any module on any page without having to load all of the JS required for every module. IgnitionJS solves this problem through the implementation of a simple registration framework. Any module defined within the platform can effectively register it's corresponding AngularJS module (along with any dependecies and additional bootstrapping) so that when the page is dynamically generated, it loads exactly what it needs and nothing more.
 
-Instead of explict dependency declarations (through comments, closures, configurations, or otherwise), IgnitionJS implements a simple tier-based loading and execution system with an easy to learn, easy to configure API.
+Instead of explict dependency declarations (through comments, closures, configurations, or otherwise), IgnitionJS implements a tier-based loading and execution system with an easy to learn, easy to configure API.
 
 ## Project Structure Requirements
 
@@ -73,13 +73,14 @@ For the time being, please review the examples below...
         <!-- LABjs is required by IgnitionJS -->
         <script src="js/vendor/LAB/LAB.min.js" />
 
-        <!-- Of course, you'll need to required IgnitionJS -->
+        <!-- Include IgnitionJS -->
         <script src="js/vendor/ignition/ignition.min.js" />
 
         <script>
 
             // Use the Ignition constructor to create a new global instance.
             // In this example, we'll name it `ignition`...
+
             var ignition = new Ignition(
 
                     // Every Ingition instance can be configured via an options
@@ -102,9 +103,9 @@ For the time being, please review the examples below...
                             {
                                 // For any given tier, you can define `aliases`
                                 // which are more semantic names by which to
-                                // reference the tier you're configuring. Any
+                                // reference the tier you are configuring. Any
                                 // alias defined here will be added as a
-                                // property on the ignition instance.
+                                // property on the Ignition instance.
 
                                 // For example, by defining `libraries` in the
                                 // array below, `ignition.libraries` becomes
@@ -117,6 +118,7 @@ For the time being, please review the examples below...
                             },
 
                             // Here we provide options for the second tier.
+
                             {
 
                                 aliases: [
@@ -131,10 +133,10 @@ For the time being, please review the examples below...
                     }
                 );
 
-            // You'll of course want to load AngularJS, you may want to load
-            // some other libraries as well. Here we are registering both
-            // AngularJS and lodash to be loaded as part of the first tier.
-            // Note how we use the alias `libraries` we defined above.
+            // Here we are registering both AngularJS and lodash to be loaded
+            // as part of the first tier.
+
+            // Note the use of the `libraries` alias previously defined above.
 
             ignition.libraries.registerSrcs([
                 'js/vendor/angular/angular.min.js',
@@ -143,6 +145,7 @@ For the time being, please review the examples below...
 
             // Here we register a few AngularJS modules which we wish to be
             // common to every page.
+
             ignition.modules.register([
                 'common',
                 'user'
@@ -154,7 +157,7 @@ For the time being, please review the examples below...
             // `registerSrcs` method used above. We could have also added this
             // source to the array above, along with Angular and lodash, but
             // if this page was being dynamically compiled on the server-side,
-            // a seperate registration call, such as this, would be needed.
+            // a separate registration call, such as this, would be needed.
 
             ignition.libraries.registerSrc('//www.googletagservices.com/tag/js/gpt.js');
 
@@ -163,7 +166,7 @@ For the time being, please review the examples below...
 
             // Here we register an anonymous function to be called after the
             // first tier (`libraries`) has finished loading. In this
-            // particular example, we initialize GPT and define an ad slot.
+            // specific example, we initialize GPT and define an ad slot.
 
             ignition.libraries.registerFn(function () {
 
@@ -189,6 +192,7 @@ For the time being, please review the examples below...
 
             // Here we include optimizely in the first tier and then activate
             // optimizely by registering a function to the `ready` tier.
+
             ignition.libraries.registerSrc('//cdn.optimizely.com/js/7544042.js');
             ignition.ready.registerFn(function () {
                 window.optimizely.push(["activate"]);
@@ -287,7 +291,7 @@ var ignition = new Ignition({
 
             dir: '/js/modules',
 
-            // `modules.validation` is a predicate function which will is used to validate module names
+            // `modules.validation` is a predicate function which is used to validate module names
 
             validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); },
 
@@ -307,22 +311,24 @@ var ignition = new Ignition({
                 // First tier
 
                 // Include an empty object for any tier for which you do not
-                // want to provide any additional configuration.
-                // Defaults will be applied.
+                // want to provide any additional configuration. Defaults will
+                // be applied.
 
                 {},
 
                 // Second tier
+
                 {
                     // As shown in the above example, you can define as many
                     // aliases for any given tier as you need...
 
                     aliases: [ 'base', 'first' ],
 
-                    // You can provide an option predicate function for
+                    // You can provide an optional predicate function for
                     // validating all source registration attempts. If you
                     // don't provide a validation function, any string value
                     // will be accepted.
+
                     validation: function (subject) { return /^\/vendor\/js\//.test(subject); }
 
                 }
