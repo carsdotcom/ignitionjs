@@ -306,34 +306,31 @@ var ignition = new Ignition({
         // Dependency tier options
 
         tiers: [
-            [
 
-                // First tier
+            // First tier
 
-                // Include an empty object for any tier for which you do not
-                // want to provide any additional configuration. Defaults will
-                // be applied.
+            // Include an empty object for any tier for which you do not
+            // want to provide any additional configuration. Defaults will
+            // be applied.
 
-                {},
+            {},
 
-                // Second tier
+            // Second tier
 
-                {
-                    // As shown in the above example, you can define as many
-                    // aliases for any given tier as you need...
+            {
+                // As shown in the above example, you can define as many
+                // aliases for any given tier as you need...
 
-                    aliases: [ 'base', 'first' ],
+                aliases: [ 'base', 'first' ],
 
-                    // You can provide an optional predicate function for
-                    // validating all source registration attempts. If you
-                    // don't provide a validation function, any string value
-                    // will be accepted.
+                // You can provide an optional predicate function for
+                // validating all source registration attempts. If you
+                // don't provide a validation function, any string value
+                // will be accepted.
 
-                    validation: function (subject) { return /^\/vendor\/js\//.test(subject); }
+                validation: function (subject) { return /^\/vendor\/js\//.test(subject); }
 
-                }
-
-            ]
+            }
 
             // ... you can continue add as many tier configuration objects as you need.
 
