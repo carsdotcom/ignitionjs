@@ -1,4 +1,4 @@
-# IgnitionJS v3.2.1
+# IgnitionJS v3.3.0
 
 IgnitionJS is a fast and flexible, script loader/bootstrapper for AngularJS. IgnitionJS utilizes on LABjs to provide simple mechanisms for non-intrusive dependency management, script loading, and function queueing. IgnitionJS is not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS; instead, it is intended to provide a simple and efficient alternative to these systems with a strong focus on AngularJS.
 
@@ -87,9 +87,18 @@ For the time being, please review the examples below...
                     // object.
 
                     {
-
                         // There are many options available.
                         //
+                        // Here we define the `sources` options property to
+                        // assign to names to sources.
+                        sources: {
+                            angular: 'js/vendor/angular/angular.min.js',
+                            lodash: 'js/vendor/lodash/lodash.min.js',
+                            gpt: '//www.googletagservices.com/tag/js/gpt.js',
+                            optimizely: '//cdn.optimizely.com/js/7544042.js',
+                            facebook: '//connect.facebook.net/en_US/sdk.js#xfbml=1'
+                        },
+
                         // Here we define the `tiers` options property.
 
                         tiers: [
@@ -138,9 +147,9 @@ For the time being, please review the examples below...
 
             // Note the use of the `libraries` alias previously defined above.
 
-            ignition.libraries.registerSrcs([
-                'js/vendor/angular/angular.min.js',
-                'js/vendor/lodash/lodash.min.js'
+            ignition.libraries.register([
+                'angular',
+                'lodash'
             ]);
 
             // Here we register a few AngularJS modules which we wish to be
@@ -152,14 +161,13 @@ For the time being, please review the examples below...
             ]);
 
             // Here we're registering the Google Publisher Tags (GPT) library
-            // as a first tier dependency. Note that we've used the
-            // `registerSrc` method to register a single source instead of the
-            // `registerSrcs` method used above. We could have also added this
-            // source to the array above, along with Angular and lodash, but
-            // if this page was being dynamically compiled on the server-side,
-            // a separate registration call, such as this, would be needed.
+            // as a first tier dependency. We could have also added this to
+            // the sources registered in the array above (Angular and lodash),
+            // but if this page was being dynamically compiled on the
+            // server-side, a separate registration call, such as this, would
+            // be needed.
 
-            ignition.libraries.registerSrc('//www.googletagservices.com/tag/js/gpt.js');
+            ignition.libraries.register('gpt');
 
             // Many times, we not only need to load scripts, but we also need
             // to run some code to configure or initialize these scripts.
@@ -193,7 +201,7 @@ For the time being, please review the examples below...
             // Here we include optimizely in the first tier and then activate
             // optimizely by registering a function to the `ready` tier.
 
-            ignition.libraries.registerSrc('//cdn.optimizely.com/js/7544042.js');
+            ignition.libraries.register('optimizely');
             ignition.ready.registerFn(function () {
                 window.optimizely.push(["activate"]);
             });
@@ -229,7 +237,7 @@ For the time being, please review the examples below...
         -->
         <script>
 
-            ignition.libraries.registerSrc('//connect.facebook.net/en_US/sdk.js#xfbml=1');
+            ignition.libraries.register('facebook');
             ignition.modules.register('social');
 
         </script>

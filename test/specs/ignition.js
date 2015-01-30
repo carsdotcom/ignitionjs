@@ -24,6 +24,17 @@ describe('an ignition instance', function () {
             ignition = new Ignition(options);
             expect(ignition.foo).toEqual(undefined);
         });
+        describe('the sources property', function () {
+            it('will be set on the ignition instance as namedSrcs', function () {
+                var namedSrcs = {
+                        foo: 'http://foo.com/foo.js'
+                    },
+                    ig = new Ignition({
+                        sources: namedSrcs
+                    });
+                expect(ig.namedSrcs).toEqual(namedSrcs);
+            });
+        });
         describe('the tiers[0].aliases property', function () {
             it('will set a corresponding property on the ignition instance object for each item in the aliases array', function () {
                 ignition = new Ignition({
@@ -40,6 +51,21 @@ describe('an ignition instance', function () {
                     }]
                 });
                 expect(ignition.ready).not.toEqual(ignition.tiers[0]);
+            });
+            it('to should not accept an aliases with a name that conflict with another ignition property', function () {
+                expect(function () {
+                    ignition = new Ignition({
+                        tiers: [{
+                            aliases: [ 'modules' ]
+                        }]
+                    });
+                }).toThrow();
+            });
+            it('to default to an empty array if not set', function () {
+                ignition = new Ignition({
+                    tiers: [{}]
+                });
+                expect(ignition.tiers[0].aliases).toEqual([]);
             });
         });
         describe('the tiers[0].validation property', function () {
@@ -125,6 +151,44 @@ describe('an ignition instance', function () {
                         }
                     });
                 }).toThrow();
+            });
+        });
+        describe('the modules.cssDir property', function () {
+            it('will be set based a property of the same name in the the options object', function () {
+                var option = 'foo';
+                ignition = new Ignition({
+                    modules: {
+                        cssDir: option
+                    }
+                });
+                expect(ignition.modules.cssDir).toEqual(option);
+            });
+            it('will throw if value is not of type `string`', function () {
+                function option() {};
+                expect(function () {
+                    ignition = new Ignition({
+                        modules: {
+                            cssDir: option
+                        }
+                    });
+                }).toThrow();
+            });
+        });
+        describe('the modules.loadCss property', function () {
+            it('will default to true', function () {
+                ignition = new Ignition();
+                expect(ignition.modules.loadCss).toEqual(true);
+            });
+            it('if set to false then calling load will never call _injectCss', function () {
+                ignition = new Ignition({
+                    modules: {
+                        loadCss: false
+                    }
+                });
+                ignition.modules.register('foo');
+                spyOn(ignition, '_injectCss');
+                ignition.load();
+                expect(ignition._injectCss).not.toHaveBeenCalled();
             });
         });
     });
@@ -342,6 +406,34 @@ describe('an ignition instance', function () {
                 expect(moduleSources).toEqual(jasmine.any(Object));
                 expect(moduleSources.length).toEqual(arr.length);
             });
+            describe('with no argument or an argument other than `css`', function () {
+                it('should return paths to js sources', function () {
+                    var arr, moduleSources;
+                    arr = [ 'foo', 'bar', 'baz' ];
+                    spyOn(ignition.modules, 'getNames').and.callFake(function () {
+                        return arr;
+                    });
+                    moduleSources = ignition.modules.getSrcs();
+                    expect(moduleSources[0]).toEqual('/app/js/modules/foo/foo.js');
+                    expect(moduleSources[1]).toEqual('/app/js/modules/bar/bar.js');
+                    expect(moduleSources[2]).toEqual('/app/js/modules/baz/baz.js');
+                });
+
+            });
+            describe('with `css` as string argument', function () {
+                it('should return paths to css sources instead of js', function () {
+                    var arr, moduleSources;
+                    arr = [ 'foo', 'bar', 'baz' ];
+                    spyOn(ignition.modules, 'getNames').and.callFake(function () {
+                        return arr;
+                    });
+                    moduleSources = ignition.modules.getSrcs('css');
+                    expect(moduleSources[0]).toEqual('/app/css/modules/foo/foo.css');
+                    expect(moduleSources[1]).toEqual('/app/css/modules/bar/bar.css');
+                    expect(moduleSources[2]).toEqual('/app/css/modules/baz/baz.css');
+                });
+
+            });
         });
     });
 
@@ -437,6 +529,81 @@ describe('an ignition instance', function () {
         });
     });
 
+    describe('#tiers[0].register', function () {
+        beforeEach(function () {
+            ignition = new Ignition({
+                sources: {
+                    foo: 'foo/bar.js'
+                }
+            });
+        });
+        it('should be a function', function () {
+            expect(ignition.tiers[0].register).toEqual(jasmine.any(Function));
+        });
+        describe('when called with a name which has been defined in options.sources', function () {
+            describe('the first time it is called', function () {
+                it('will register the corresponding source', function () {
+                    ignition.tiers[0].register('foo');
+                    expect(ignition.tiers[0].getSrcs().indexOf('foo/bar.js') >= 0).toEqual(true);
+                });
+            });
+            describe('if already registered to another tier', function () {
+                it('will do nothing because the source is already registered', function () {
+                    ignition.tiers[0].register('foo');
+                    ignition.tiers[1].register('foo');
+                    expect(ignition.tiers[0].getSrcs().length === 1).toEqual(true);
+                    expect(ignition.tiers[1].getSrcs().length === 0).toEqual(true);
+                    ignition = new Ignition({
+                        sources: {
+                            foo: 'foo/bar.js'
+                        }
+                    });
+                    ignition.tiers[1].register('foo');
+                    ignition.tiers[0].register('foo');
+                    expect(ignition.tiers[1].getSrcs().length === 1).toEqual(true);
+                    expect(ignition.tiers[0].getSrcs().length === 0).toEqual(true);
+                });
+            });
+            describe('the second time it is called', function () {
+                it('will do nothing because the source is already registered', function () {
+                    ignition.tiers[0].register('foo');
+                    ignition.tiers[0].register('foo');
+                    ignition.tiers[0].register('foo');
+                    expect(ignition.tiers[0].getSrcs().length === 1).toEqual(true);
+                });
+            });
+        });
+        describe('when called with a name which has not been defined in options.sources', function () {
+            it('should throw an error', function () {
+                expect(function () {
+                    ignition.tiers[0].register('bar');
+                }).toThrow();
+            });
+        });
+        describe('when called with an array', function () {
+            it('should call registerSrc once for each item in the array', function () {
+                    var srcs = [ 'foo', 'bar', 'baz' ];
+                    ignition = new Ignition({
+                        sources: {
+                            foo: 'foo/foo.js',
+                            bar: 'bar/bar.js',
+                            baz: 'baz/baz.js'
+                        }
+                    });
+                    spyOn(ignition.tiers[0], 'registerSrc').and.callThrough();
+                    ignition.tiers[0].register(srcs);
+                    expect(ignition.tiers[0].registerSrc.calls.count()).toEqual(srcs.length);
+            });
+        });
+        describe('when called with something other than a string or an array', function () {
+            it('should throw an error', function () {
+                expect(function () { ignition.tiers[0].register(1); }).toThrow();
+                expect(function () { ignition.tiers[0].register({}); }).toThrow();
+                expect(function () { ignition.tiers[0].register(function () {}); }).toThrow();
+            });
+        });
+    });
+
     describe('#tiers[0].registerSrc', function () {
         beforeEach(function () {
             ignition = new Ignition();
@@ -509,6 +676,21 @@ describe('an ignition instance', function () {
         });
     });
 
+    describe('#_injectCss', function () {
+        beforeEach(function () {
+            ignition = new Ignition();
+        });
+        it('should be a function', function () {
+            expect(ignition._injectCss).toEqual(jasmine.any(Function));
+        });
+        describe('when called', function () {
+            it('with a string and an element should inject a link tag element into the given elment with an href value which matches the given string, ', function () {
+                var dom = document.createElement('div');
+                ignition._injectCss('foo', dom);
+                expect(dom.getElementsByTagName('link')[0].getAttribute('href')).toEqual('foo');
+            });
+        });
+    });
     describe('#_buildModulePath', function () {
         beforeEach(function () {
             ignition = new Ignition();
@@ -517,9 +699,10 @@ describe('an ignition instance', function () {
             expect(ignition._buildModulePath).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
-            it('with a base directory and module name should return a formatted module path', function () {
-                expect(ignition._buildModulePath('name', 'base/')).toEqual('base/name/name.js');
-                expect(ignition._buildModulePath('name', 'base')).toEqual('base/name/name.js');
+            it('with a base directory, module name and extension should return a formatted module path', function () {
+                expect(ignition._buildModulePath('name', 'base/', 'js')).toEqual('base/name/name.js');
+                expect(ignition._buildModulePath('name', 'base', 'js')).toEqual('base/name/name.js');
+                expect(ignition._buildModulePath('name', 'base', 'css')).toEqual('base/name/name.css');
             });
         });
     });
@@ -564,6 +747,14 @@ describe('an ignition instance', function () {
                 spyOn(ignition, '_loadTier').and.callThrough();
                 ignition.load();
                 expect(ignition._loadTier).toHaveBeenCalledWith(jasmine.any(Number), jasmine.any(Object));
+            });
+            it('should call _injectCss once for each module', function () {
+                var modules = [ 'foo', 'bar', 'baz' ];
+                ignition = new Ignition();
+                ignition.modules.register(modules);
+                spyOn(ignition, '_injectCss').and.callThrough();
+                ignition.load();
+                expect(ignition._injectCss.calls.count()).toEqual(modules.length);
             });
             it('should call modules.bootstrap once', function () {
                 spyOn(ignition.modules, 'bootstrap').and.callThrough();
