@@ -175,11 +175,11 @@ describe('an ignition instance', function () {
             });
         });
         describe('the modules.loadCss property', function () {
-            it('will default to true', function () {
+            it('will default to false', function () {
                 ignition = new Ignition();
-                expect(ignition.modules.loadCss).toEqual(true);
+                expect(ignition.modules.loadCss).toEqual(false);
             });
-            it('if set to false then calling load will never call _injectCss', function () {
+            it('if set to false, then calling load will never call _injectCss', function () {
                 ignition = new Ignition({
                     modules: {
                         loadCss: false
@@ -684,10 +684,24 @@ describe('an ignition instance', function () {
             expect(ignition._injectCss).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
-            it('with a string and an element should inject a link tag element into the given elment with an href value which matches the given string, ', function () {
-                var dom = document.createElement('div');
-                ignition._injectCss('foo', dom);
-                expect(dom.getElementsByTagName('link')[0].getAttribute('href')).toEqual('foo');
+            it('with a source (string) should inject a link tag element into the head tag of the page with an href value which matches the given string, ', function () {
+                var src = 'foo.css',
+                    links;
+                ignition._injectCss(src);
+                links = document.getElementsByTagName('head')[0].getElementsByTagName('link');
+                expect(links[links.length - 1].getAttribute('href')).toEqual(src);
+            });
+            it('a with a source which already exists in the head should not add any additional links tags to the head', function () {
+                var src = 'foo.css',
+                    head = document.getElementsByTagName('head')[0],
+                    link,
+                    initialLinkCount;
+                link = document.createElement('link');
+                link.setAttribute('href', src);
+                head.appendChild(link);
+                initialLinkCount = head.getElementsByTagName('link').length;
+                ignition._injectCss(src);
+                expect(initialLinkCount).toEqual(head.getElementsByTagName('link').length);
             });
         });
     });
@@ -748,9 +762,9 @@ describe('an ignition instance', function () {
                 ignition.load();
                 expect(ignition._loadTier).toHaveBeenCalledWith(jasmine.any(Number), jasmine.any(Object));
             });
-            it('should call _injectCss once for each module', function () {
+            it('should call _injectCss once for each module, if loadCss option is set to true', function () {
                 var modules = [ 'foo', 'bar', 'baz' ];
-                ignition = new Ignition();
+                ignition = new Ignition({modules:{loadCss:true}});
                 ignition.modules.register(modules);
                 spyOn(ignition, '_injectCss').and.callThrough();
                 ignition.load();

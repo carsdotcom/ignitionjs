@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v3.3.0 <https://github.com/carsdotcom>
+ * IgnitionJS v3.3.1 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -107,7 +107,7 @@
                 modules: {
                     validation: function (subject) { return (isString(subject) && /^[A-Za-z]+\w*$/.test(subject)); },
                     dir: '/app/js/modules/',
-                    loadCss: true,
+                    loadCss: false,
                     cssDir: '/app/css/modules/',
                     bootstrap: function (modules) { angular.bootstrap(document, modules); }
                 }
@@ -283,14 +283,20 @@
         });
     };
 
-    Ignition.fn._injectCss = function (src, element) {
-        var link;
-        element = isUndefined(element) ? document.getElementsByTagName('head')[0] : element;
+    Ignition.fn._injectCss = function (src) {
+        var head = document.getElementsByTagName('head')[0],
+            links,
+            i,
+            link;
+        links = head.getElementsByTagName('link');
+        for (i = 0; i < links.length; i++) {
+            if (links[i].getAttribute('href') === src) return;
+        }
         link = document.createElement('link');
         link.setAttribute('rel', 'stylesheet');
         link.setAttribute('type', 'text/css');
         link.setAttribute('href', src);
-        element.appendChild(link);
+        head.appendChild(link);
     };
 
     Ignition.fn.load = function () {
