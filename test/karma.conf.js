@@ -2,7 +2,7 @@ module.exports = function (config) {
     config.set({
         basePath: '..',
         files: [
-            'src/ignition.js',
+            'dist/ignition.js',
             'test/specs/ignition.js'
         ],
         frameworks: [ 'jasmine' ],

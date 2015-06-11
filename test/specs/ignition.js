@@ -56,7 +56,7 @@ describe('an ignition instance', function () {
                 expect(function () {
                     ignition = new Ignition({
                         tiers: [{
-                            aliases: [ 'modules' ]
+                            aliases: [ 'bundles' ]
                         }]
                     });
                 }).toThrow();
@@ -90,102 +90,77 @@ describe('an ignition instance', function () {
                 expect(ignition.tiers[1].validation).toEqual(option);
             });
         });
-        describe('the modules.validation property', function () {
+        describe('the bundles.validation property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {}
                 ignition = new Ignition({
-                    modules: {
+                    bundles: {
                         validation: option
                     }
                 });
-                expect(ignition.modules.validation).toEqual(option);
+                expect(ignition.bundles.validation).toEqual(option);
             });
             it('will throw if value is not of type `function`', function () {
                 var option = 'foo';
                 expect(function () {
                     ignition = new Ignition({
-                        modules: {
+                        bundles: {
                             validation: option
                         }
                     });
                 }).toThrow();
             });
         });
-        describe('the modules.dir property', function () {
+        describe('the bundles.dir property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 var option = 'foo';
                 ignition = new Ignition({
-                    modules: {
+                    bundles: {
                         dir: option
                     }
                 });
-                expect(ignition.modules.dir).toEqual(option);
+                expect(ignition.bundles.dir).toEqual(option);
             });
             it('will throw if value is not of type `string`', function () {
                 function option() {};
                 expect(function () {
                     ignition = new Ignition({
-                        modules: {
+                        bundles: {
                             dir: option
                         }
                     });
                 }).toThrow();
             });
         });
-        describe('the modules.bootstrap property', function () {
+        describe('the bundles.bootstrap property', function () {
             it('will be set based a property of the same name in the the options object', function () {
                 function option() {};
                 ignition = new Ignition({
-                    modules: {
-                        bootstrap: option
-                    }
+                    bootstrap: option
                 });
-                expect(ignition.modules.bootstrap).toEqual(option);
+                expect(ignition.bootstrap).toEqual(option);
             });
             it('will throw if value is not of type `function`', function () {
                 var option = 'foo';
                 expect(function () {
                     ignition = new Ignition({
-                        modules: {
-                            bootstrap: option
-                        }
+                        bootstrap: option
                     });
                 }).toThrow();
             });
         });
-        describe('the modules.cssDir property', function () {
-            it('will be set based a property of the same name in the the options object', function () {
-                var option = 'foo';
-                ignition = new Ignition({
-                    modules: {
-                        cssDir: option
-                    }
-                });
-                expect(ignition.modules.cssDir).toEqual(option);
-            });
-            it('will throw if value is not of type `string`', function () {
-                function option() {};
-                expect(function () {
-                    ignition = new Ignition({
-                        modules: {
-                            cssDir: option
-                        }
-                    });
-                }).toThrow();
-            });
-        });
-        describe('the modules.loadCss property', function () {
+        describe('the bundles.loadCss property', function () {
             it('will default to false', function () {
                 ignition = new Ignition();
-                expect(ignition.modules.loadCss).toEqual(false);
+                expect(ignition.bundles.loadCss).toEqual(false);
             });
             it('if set to false, then calling load will never call _injectCss', function () {
                 ignition = new Ignition({
-                    modules: {
+                    bundles: {
                         loadCss: false
                     }
                 });
-                ignition.modules.register('foo');
+                ignition.bundles.register('foo');
                 spyOn(ignition, '_injectCss');
                 ignition.load();
                 expect(ignition._injectCss).not.toHaveBeenCalled();
@@ -372,144 +347,137 @@ describe('an ignition instance', function () {
         });
     });
 
-    describe('#modules.getNames', function () {
+    describe('#bundles.register', function () {
+        beforeEach(function () {
+            ignition = new Ignition();
+        });
+        it('should register a bundle', function () {
+            var bundleName = 'myBundle';
+            ignition.bundles.register(bundleName, [ 'moduleOne', 'moduleTwo' ]);
+            expect(ignition.bundles.getNames()).toEqual([ bundleName ]);
+        });
+        it("should register a bundle's modules", function () {
+            var bundleName = 'myBundle';
+            var bundleModules = [ 'moduleOne', 'moduleTwo' ];
+            ignition.bundles.register(bundleName, bundleModules);
+            expect(ignition.bundleModules.getNames()).toEqual(bundleModules);
+        });
+        it('should throw when passed a non-string', function () {
+            var bundleName = {};
+            expect(function () { ignition.bundles.register(bundleName, [ 'moduleOne', 'moduleTwo' ]); }).toThrow();
+        });
+        it('should register a module of the same name as the bundle when no bundleModules are provided', function () {
+            var bundleName = 'myBundle';
+            ignition.bundles.register(bundleName);
+            expect(ignition.bundleModules.getNames()).toEqual([bundleName]);
+        });
+    });
+
+    describe('#bundles.getNames', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.modules.getNames).toEqual(jasmine.any(Function));
+            expect(ignition.bundles.getNames).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
             it('should return an array', function () {
-                var modules = ignition.modules.getNames();
-                expect(modules).toEqual(jasmine.any(Object));
-                expect(modules.length).toEqual(jasmine.any(Number));
+                var bundles = ignition.bundles.getNames();
+                expect(bundles).toEqual(jasmine.any(Object));
+                expect(bundles.length).toEqual(jasmine.any(Number));
             });
         });
     });
 
-    describe('#modules.getSrcs', function () {
+    describe('#bundles.getSrcs', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.modules.getSrcs).toEqual(jasmine.any(Function));
+            expect(ignition.bundles.getSrcs).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
-            it('should return an array of the same length as modules.getNames', function () {
-                var arr, moduleSources;
+            it('should return an array of the same length as bundles.getNames', function () {
+                var arr, bundleSources;
                 arr = [ 'foo', 'bar', 'baz' ];
-                spyOn(ignition.modules, 'getNames').and.callFake(function () {
+                spyOn(ignition.bundles, 'getNames').and.callFake(function () {
                     return arr;
                 });
-                moduleSources = ignition.modules.getSrcs();
-                expect(moduleSources).toEqual(jasmine.any(Object));
-                expect(moduleSources.length).toEqual(arr.length);
+                bundleSources = ignition.bundles.getSrcs();
+                expect(bundleSources).toEqual(jasmine.any(Object));
+                expect(bundleSources.length).toEqual(arr.length);
             });
             describe('with no argument or an argument other than `css`', function () {
                 it('should return paths to js sources', function () {
-                    var arr, moduleSources;
+                    var arr, bundleSources;
                     arr = [ 'foo', 'bar', 'baz' ];
-                    spyOn(ignition.modules, 'getNames').and.callFake(function () {
+                    spyOn(ignition.bundles, 'getNames').and.callFake(function () {
                         return arr;
                     });
-                    moduleSources = ignition.modules.getSrcs();
-                    expect(moduleSources[0]).toEqual('/app/js/modules/foo/foo.js');
-                    expect(moduleSources[1]).toEqual('/app/js/modules/bar/bar.js');
-                    expect(moduleSources[2]).toEqual('/app/js/modules/baz/baz.js');
+                    bundleSources = ignition.bundles.getSrcs();
+                    expect(bundleSources[0]).toEqual('/app/bundles/foo.js');
+                    expect(bundleSources[1]).toEqual('/app/bundles/bar.js');
+                    expect(bundleSources[2]).toEqual('/app/bundles/baz.js');
                 });
 
             });
             describe('with `css` as string argument', function () {
                 it('should return paths to css sources instead of js', function () {
-                    var arr, moduleSources;
+                    var arr, bundleSources;
                     arr = [ 'foo', 'bar', 'baz' ];
-                    spyOn(ignition.modules, 'getNames').and.callFake(function () {
+                    spyOn(ignition.bundles, 'getNames').and.callFake(function () {
                         return arr;
                     });
-                    moduleSources = ignition.modules.getSrcs('css');
-                    expect(moduleSources[0]).toEqual('/app/css/modules/foo/foo.css');
-                    expect(moduleSources[1]).toEqual('/app/css/modules/bar/bar.css');
-                    expect(moduleSources[2]).toEqual('/app/css/modules/baz/baz.css');
+                    bundleSources = ignition.bundles.getSrcs('css');
+                    expect(bundleSources[0]).toEqual('/app/bundles/foo.css');
+                    expect(bundleSources[1]).toEqual('/app/bundles/bar.css');
+                    expect(bundleSources[2]).toEqual('/app/bundles/baz.css');
                 });
 
             });
         });
     });
 
-    describe('#modules.registerOne', function () {
+    describe('#bundles.registerOne', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.modules.registerOne).toEqual(jasmine.any(Function));
+            expect(ignition.bundles.registerOne).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
-            it('with a valid module name which hasn\'t already been added should add the module to the modules array', function () {
-                ignition.modules.registerOne('foo');
-                expect(ignition.modules.getNames().indexOf('foo') >= 0).toEqual(true);
-                expect(ignition.modules.getNames().length === 1).toEqual(true);
+            it('with a valid bundle name which hasn\'t already been added should add the bundle to the bundles array', function () {
+                ignition.bundles.registerOne('foo');
+                expect(ignition.bundles.getNames().indexOf('foo') >= 0).toEqual(true);
+                expect(ignition.bundles.getNames().length === 1).toEqual(true);
             });
-            it('with a valid module name which has already been added should not add the module to the modules array', function () {
-                ignition.modules.registerOne('foo');
-                ignition.modules.registerOne('foo');
-                expect(ignition.modules.getNames().length === 1).toEqual(true);
+            it('with a valid bundle name which has already been added should not add the bundle to the bundles array', function () {
+                ignition.bundles.registerOne('foo');
+                ignition.bundles.registerOne('foo');
+                expect(ignition.bundles.getNames().length === 1).toEqual(true);
             });
-            it('with a invalid module name should throw an error', function () {
-                expect(function () { ignition.modules.registerOne('$foo'); }).toThrow();
-                expect(function () { ignition.modules.registerOne(1); }).toThrow();
-                expect(function () { ignition.modules.registerOne([]); }).toThrow();
-                expect(function () { ignition.modules.registerOne({}); }).toThrow();
-                expect(function () { ignition.modules.registerOne(function () {}); }).toThrow();
+            it('with a invalid bundle name should throw an error', function () {
+                expect(function () { ignition.bundles.registerOne('$foo'); }).toThrow();
+                expect(function () { ignition.bundles.registerOne(1); }).toThrow();
+                expect(function () { ignition.bundles.registerOne([]); }).toThrow();
+                expect(function () { ignition.bundles.registerOne({}); }).toThrow();
+                expect(function () { ignition.bundles.registerOne(function () {}); }).toThrow();
             });
         });
     });
 
-    describe('#modules.registerMany', function () {
+    describe('#bundles.registerMany', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition.modules.registerMany).toEqual(jasmine.any(Function));
+            expect(ignition.bundles.registerMany).toEqual(jasmine.any(Function));
         });
-        it('should call _registerMulti with modules.registerOne and an array', function () {
+        it('should call _registerMulti with bundles.registerOne and an array', function () {
             var arr = [ 'foo', 'bar' ];
             spyOn(ignition, '_registerMulti');
-            ignition.modules.registerMany(arr);
-            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.modules.registerOne, arr);
-        });
-    });
-
-    describe('#modules.register', function () {
-        beforeEach(function () {
-            ignition = new Ignition();
-        });
-        it('should be a function', function () {
-            expect(ignition.modules.register).toEqual(jasmine.any(Function));
-        });
-        describe('if called with a string', function () {
-            it('should call modules.registerOne the given string', function () {
-                var str = 'foo';
-                spyOn(ignition.modules, 'registerOne');
-                ignition.modules.register(str);
-                expect(ignition.modules.registerOne).toHaveBeenCalledWith(str);
-            });
-        });
-        describe('if called with an array', function () {
-            it('should call modules.registerMany the given array', function () {
-                var arr = [ 'foo', 'bar' ];
-                spyOn(ignition.modules, 'registerMany');
-                ignition.modules.register(arr);
-                expect(ignition.modules.registerMany).toHaveBeenCalledWith(arr);
-            });
-        });
-        describe('if called with a type other than a string or an array', function () {
-            it('should throw', function () {
-                function otherType() {};
-                expect(function () {
-                    ignition.modules.register(otherType);
-                }).toThrow();
-            });
+            ignition.bundles.registerMany(arr);
+            expect(ignition._registerMulti).toHaveBeenCalledWith(ignition.bundles.registerOne, arr);
         });
     });
 
@@ -705,18 +673,18 @@ describe('an ignition instance', function () {
             });
         });
     });
-    describe('#_buildModulePath', function () {
+    describe('#_buildBundlePath', function () {
         beforeEach(function () {
             ignition = new Ignition();
         });
         it('should be a function', function () {
-            expect(ignition._buildModulePath).toEqual(jasmine.any(Function));
+            expect(ignition._buildBundlePath).toEqual(jasmine.any(Function));
         });
         describe('when called', function () {
-            it('with a base directory, module name and extension should return a formatted module path', function () {
-                expect(ignition._buildModulePath('name', 'base/', 'js')).toEqual('base/name/name.js');
-                expect(ignition._buildModulePath('name', 'base', 'js')).toEqual('base/name/name.js');
-                expect(ignition._buildModulePath('name', 'base', 'css')).toEqual('base/name/name.css');
+            it('with a base directory, bundle name and extension should return a formatted bundle path', function () {
+                expect(ignition._buildBundlePath('name', 'base/', 'js')).toEqual('base/name.js');
+                expect(ignition._buildBundlePath('name', 'base', 'js')).toEqual('base/name.js');
+                expect(ignition._buildBundlePath('name', 'base', 'css')).toEqual('base/name.css');
             });
         });
     });
@@ -741,8 +709,11 @@ describe('an ignition instance', function () {
     });
 
     describe('#load', function () {
+        var bundleName = 'myBundle',
+            bundleModules = [ 'moduleOne', 'moduleTwo' ];
         beforeEach(function () {
             ignition = new Ignition();
+            ignition.bundles.register(bundleName, bundleModules);
         });
         it('should be a function', function () {
             expect(ignition.load).toEqual(jasmine.any(Function));
@@ -751,6 +722,7 @@ describe('an ignition instance', function () {
             it('should throw if $LAB is not set', function () {
                 $LAB = null;
                 ignition = new Ignition();
+                ignition.tiers[0].registerSrcs([ 'foo', 'bar' ]);
                 ignition.tiers[0].registerSrcs([ 'foo', 'bar' ]);
                 ignition.tiers[0].registerFn(function () {});
                 ignition.tiers[1].registerSrcs([ 'foo', 'bar' ]);
@@ -762,18 +734,21 @@ describe('an ignition instance', function () {
                 ignition.load();
                 expect(ignition._loadTier).toHaveBeenCalledWith(jasmine.any(Number), jasmine.any(Object));
             });
-            it('should call _injectCss once for each module, if loadCss option is set to true', function () {
-                var modules = [ 'foo', 'bar', 'baz' ];
-                ignition = new Ignition({modules:{loadCss:true}});
-                ignition.modules.register(modules);
+            it('should call _injectCss once for each bundle, if loadCss option is set to true', function () {
+                var bundles = [ 'foo', 'bar', 'baz' ];
+                ignition = new Ignition({bundles:{loadCss:true}});
+                ignition.bundles.register(bundles[0]);
+                ignition.bundles.register(bundles[1]);
+                ignition.bundles.register(bundles[2]);
                 spyOn(ignition, '_injectCss').and.callThrough();
                 ignition.load();
-                expect(ignition._injectCss.calls.count()).toEqual(modules.length);
+                expect(ignition._injectCss.calls.count()).toEqual(bundles.length);
             });
-            it('should call modules.bootstrap once', function () {
-                spyOn(ignition.modules, 'bootstrap').and.callThrough();
+            it('should call bootstrap once with bundle module names', function () {
+                spyOn(ignition, 'bootstrap').and.callThrough();
                 ignition.load();
-                expect(ignition.modules.bootstrap.calls.count()).toEqual(1);
+                expect(ignition.bootstrap.calls.count()).toEqual(1);
+                expect(ignition.bootstrap).toHaveBeenCalledWith(bundleModules);
             });
             it('should call _execFunctionQueue four times', function () {
                 spyOn(ignition, '_execFunctionQueue').and.callThrough();
