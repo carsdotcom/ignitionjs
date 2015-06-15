@@ -1,46 +1,10 @@
-# IgnitionJS v3.3.1
+# IgnitionJS v3.4.0
 
-IgnitionJS is a fast and flexible, script loader/bootstrapper for AngularJS. IgnitionJS utilizes on LABjs to provide simple mechanisms for non-intrusive dependency management, script loading, and function queueing. IgnitionJS is not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS; instead, it is intended to provide a simple and efficient alternative to these systems with a strong focus on AngularJS.
+IgnitionJS is a fast and flexible, script loader/bootstrapper for AngularJS. IgnitionJS utilizes Cars.com's fork of LABjs to provide simple mechanisms for non-intrusive dependency management, script loading, and function queueing. IgnitionJS is not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS; instead, it is intended to provide a simple and efficient alternative to these systems with a strong focus on AngularJS.
 
-IngitionJS was built to provide a simple framework which addresses the front-end performance challenges that come with running AngularJS atop an enterprise platform. More specifically, it provides a solution for allowing contributors to place any module on any page without having to load all of the JS required for every module. IgnitionJS solves this problem through the implementation of a simple registration framework. Any module defined within the platform can effectively register it's corresponding AngularJS module (along with any dependecies and additional bootstrapping) so that when the page is dynamically generated, it loads exactly what it needs and nothing more.
+IngitionJS was built to provide a simple framework which addresses the front-end performance challenges that come with running AngularJS atop an enterprise platform. More specifically, it provides a solution for allowing contributors to place any module on any page without having to load all of the JS required for every module. IgnitionJS solves this problem through the implementation of a simple registration framework. Any module defined within the platform can effectively register its corresponding AngularJS module (along with any dependecies and additional bootstrapping) so that when the page is dynamically generated, it loads and executes exactly what it needs and nothing more.
 
 Instead of explict dependency declarations (through comments, closures, configurations, or otherwise), IgnitionJS implements a tier-based loading and execution system with an easy to learn, easy to configure API.
-
-## Project Structure Requirements
-
-IgnitionJS favors convention over configuration. To make use of IgnitionJS, you first must adhere the following structure within your modules directory.
-
-```text
-{{modulesDir}}/{{moduleName}}/{{moduleName}}.js
-```
-
-For example...
-
-```text
-/app/js/modules/common/common.js
-```
-
-Additionally, your AngularJS modules must use the same name as is used in the file system.
-
-Building on the above example, inside `common.js` you would need to define a AngularJS module named `common`:
-
-```js
-angular.module('common');
-```
-
-This naming consistency is what allows IgnitionJS to work so simply. Please note that it's recommend that you use a build task (grunt or gulp) to create these single module files and that you adhere to standard AngularJS directory structure for each module within your original source.
-
-Here's an example of what the structure of your original source might look like:
-
-```text
-/src/app/js/modules/common/common.js
-/src/app/js/modules/common/controllers/navController.js
-/src/app/js/modules/common/directives/navDirective.js
-/src/app/js/modules/common/services/userService.js
-/src/app/js/modules/common/filter/noFractionCurrency.js
-```
-
-Your build task would then concatenate all of these files into a single file (`/dist/app/js/modules/common/common.js`).
 
 ## Bower Install
 
@@ -52,14 +16,6 @@ bower install ignition
 
 * [ignition.js](http://git.cars.com/projects/FE/repos/ignition/browse/dist/ignition.js)
 * [ignition.min.js](http://git.cars.com/projects/FE/repos/ignition/browse/dist/ignition.min.js)
-
-## Usage
-
-Once you have established a compatible project structure (see above), you're ready to configure IgnitionJS to handle all of script loading and bootstrapping.
-
-_Complete API documentation coming soon!_
-
-For the time being, please review the examples below...
 
 ### Examples
 
@@ -152,14 +108,21 @@ For the time being, please review the examples below...
                 'lodash'
             ]);
 
-            // Here we register a few AngularJS modules which we wish to be
-            // common to every page.
+            // Here we register a bundle along with the names of the two 
+            // Angular modules which it contains
 
-            ignition.modules.register([
-                'common',
-                'user'
-            ]);
+            ignition.bundles.register('myBundle', [ 'common', 'user' ]);
 
+            // This will load the file {{bundlesDir}}/myBundle.js and bootstrap
+            // two Angular modules: 'common' and 'user'
+
+            // If you would like to load a bundle containing a single module of
+            // the same name, you can use this shorthand
+
+            ignition.bundles.register('common');
+
+            // This will load the file {{bundlesDir}}/common.js and bootstrap an Angular module called 'common'
+            
             // Here we're registering the Google Publisher Tags (GPT) library
             // as a first tier dependency. We could have also added this to
             // the sources registered in the array above (Angular and lodash),
@@ -238,7 +201,7 @@ For the time being, please review the examples below...
         <script>
 
             ignition.libraries.register('facebook');
-            ignition.modules.register('social');
+            ignition.bundles.register('social');
 
         </script>
         <my-social-directive></my-social-directive>
@@ -291,24 +254,24 @@ For the time being, please review the examples below...
 ```js
 var ignition = new Ignition({
 
-        // Module tier options
+        // Bundle tier options
 
-        modules: {
+        bundles: {
 
-            // `modules.dir` sets the base modules directory
+            // `bundles.dir` sets the base bundles directory
 
-            dir: '/js/modules',
+            dir: '/js/bundles',
 
-            // `modules.validation` is a predicate function which is used to validate module names
+            // `bundles.validation` is a predicate function which is used to validate module names
 
-            validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); },
+            validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); }
 
-            // `modules.bootstrap` overrides the default angular bootstrap callback
+        },
 
-            bootstrap: function (modules) {
-                angular.bootstrap(document.getElementById('app'), modules);
-            }
+        // `bootstrap` overrides the default angular bootstrap callback
 
+        bootstrap: function (modules) {
+            angular.bootstrap(document.getElementById('app'), modules);
         },
 
         // Dependency tier options

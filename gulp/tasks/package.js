@@ -6,15 +6,18 @@
 var gulp,
     util,
     rename,
-    uglify;
+    uglify,
+    babel;
 
 gulp = require('gulp');
 util = require('gulp-util');
 rename = require('gulp-rename');
 uglify = require('gulp-uglify');
+babel = require('gulp-babel');
 
 module.exports = function () {
     return gulp.src('src/ignition.js')
+        .pipe(babel())
         .pipe(gulp.dest('dist/'))
         .pipe(rename('ignition.min.js'))
         .pipe(uglify({
