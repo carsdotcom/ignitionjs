@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v3.4.0 <https://github.com/carsdotcom>
+ * IgnitionJS v4.0.0 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -164,11 +164,11 @@
         }
 
         ig.namedSrcs = isObject(options.sources) ? options.sources : {};
-        isObject(ig.namedSrcs, true);
 
         ig.bundles = {};
         ig.bundles.names = [];
         ig.bundles.getNames = generateArrayPropCloner('names');
+        ig.bundles.modules = isObject(options.bundles.modules) ? options.bundles.modules : {};
 
         ig.bundleModules = {};
         ig.bundleModules.names = [];
@@ -189,7 +189,7 @@
             ig._registerMulti(this.registerOne, bundles);
         };
 
-        ig.bundles.register = function (bundleName, bundleModules = [ bundleName ]) {
+        ig.bundles.register = function (bundleName, bundleModules = ig.bundles.modules[bundleName] || [ bundleName ]) {
             isString(bundleName, true);
             ig.bundles.registerOne(bundleName);
             ig.bundleModules.registerMany(bundleModules);
