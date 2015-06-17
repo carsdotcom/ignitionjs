@@ -1,4 +1,4 @@
-# IgnitionJS v3.4.0
+# IgnitionJS v4.0.0
 
 IgnitionJS is a fast and flexible, script loader/bootstrapper for AngularJS. IgnitionJS utilizes Cars.com's fork of LABjs to provide simple mechanisms for non-intrusive dependency management, script loading, and function queueing. IgnitionJS is not an attempt to replicate the functionality of module frameworks such as RequireJS (AMD) or CommonJS; instead, it is intended to provide a simple and efficient alternative to these systems with a strong focus on AngularJS.
 
@@ -122,6 +122,7 @@ bower install ignition
             ignition.bundles.register('common');
 
             // This will load the file {{bundlesDir}}/common.js and bootstrap an Angular module called 'common'
+
             
             // Here we're registering the Google Publisher Tags (GPT) library
             // as a first tier dependency. We could have also added this to
@@ -264,7 +265,12 @@ var ignition = new Ignition({
 
             // `bundles.validation` is a predicate function which is used to validate module names
 
-            validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); }
+            validation: function (subject) { return ((typeof subject === 'string') && /^[A-Za-z\-]+\w*$/.test(subject)); },
+
+            // `bundles.modules` is a map which assigns a set of module names to a given bundle
+            bundles: {
+                'common': [ 'commom', 'user', 'social' ]
+            }
 
         },
 

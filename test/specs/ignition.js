@@ -69,7 +69,7 @@ describe('an ignition instance', function () {
             });
         });
         describe('the tiers[0].validation property', function () {
-            it('will be set based a property of the same name in the the options object', function () {
+            it('will be set based a property of the same name in the options object', function () {
                 function option() {}
                 ignition = new Ignition({
                     tiers: [{
@@ -80,7 +80,7 @@ describe('an ignition instance', function () {
             });
         });
         describe('the tiers[1].validation property', function () {
-            it('will be set based a property of the same name in the the options object', function () {
+            it('will be set based a property of the same name in the options object', function () {
                 function option() {}
                 ignition = new Ignition({
                     tiers: [{},{
@@ -90,8 +90,26 @@ describe('an ignition instance', function () {
                 expect(ignition.tiers[1].validation).toEqual(option);
             });
         });
+        describe('the bundles.modules property', function () {
+            it('will be set based a property of the same name in the options object', function () {
+                var option = { 'foo': [ 'bar', 'baz' ] };
+                ignition = new Ignition({
+                    bundles: {
+                        modules: option
+                    }
+                });
+                expect(ignition.bundles.modules).toEqual(option);
+            });
+            it('will be set to an empty object if property of the same name is not in the options object', function () {
+                var option = {};
+                ignition = new Ignition({
+                    bundles: {}
+                });
+                expect(ignition.bundles.modules).toEqual(option);
+            });
+        });
         describe('the bundles.validation property', function () {
-            it('will be set based a property of the same name in the the options object', function () {
+            it('will be set based a property of the same name in the options object', function () {
                 function option() {}
                 ignition = new Ignition({
                     bundles: {
@@ -112,7 +130,7 @@ describe('an ignition instance', function () {
             });
         });
         describe('the bundles.dir property', function () {
-            it('will be set based a property of the same name in the the options object', function () {
+            it('will be set based a property of the same name in the options object', function () {
                 var option = 'foo';
                 ignition = new Ignition({
                     bundles: {
@@ -133,7 +151,7 @@ describe('an ignition instance', function () {
             });
         });
         describe('the bundles.bootstrap property', function () {
-            it('will be set based a property of the same name in the the options object', function () {
+            it('will be set based a property of the same name in the options object', function () {
                 function option() {};
                 ignition = new Ignition({
                     bootstrap: option
@@ -348,25 +366,39 @@ describe('an ignition instance', function () {
     });
 
     describe('#bundles.register', function () {
+        var options;
+
         beforeEach(function () {
-            ignition = new Ignition();
+            options = {
+                bundles: {
+                    modules: {
+                        myMappedBundle: [ 'myAngularModule', 'mySecondAngularModule' ]
+                    }
+                }
+            };
+            ignition = new Ignition(options);
         });
         it('should register a bundle', function () {
             var bundleName = 'myBundle';
             ignition.bundles.register(bundleName, [ 'moduleOne', 'moduleTwo' ]);
             expect(ignition.bundles.getNames()).toEqual([ bundleName ]);
         });
-        it("should register a bundle's modules", function () {
+        it("should register a bundle's modules when passed a second parameter", function () {
             var bundleName = 'myBundle';
             var bundleModules = [ 'moduleOne', 'moduleTwo' ];
             ignition.bundles.register(bundleName, bundleModules);
             expect(ignition.bundleModules.getNames()).toEqual(bundleModules);
         });
+        it("should register a bundle's modules when not passed a second parameter if modules are defined in bundles.modules", function () {
+            var bundleName = 'myMappedBundle';
+            ignition.bundles.register(bundleName);
+            expect(ignition.bundleModules.getNames()).toEqual(options.bundles.modules[bundleName]);
+        });
         it('should throw when passed a non-string', function () {
             var bundleName = {};
             expect(function () { ignition.bundles.register(bundleName, [ 'moduleOne', 'moduleTwo' ]); }).toThrow();
         });
-        it('should register a module of the same name as the bundle when no bundleModules are provided', function () {
+        it('should register a module of the same name as the bundle when no bundleModules are provided and bundles.modules does not contain bundle name', function () {
             var bundleName = 'myBundle';
             ignition.bundles.register(bundleName);
             expect(ignition.bundleModules.getNames()).toEqual([bundleName]);
