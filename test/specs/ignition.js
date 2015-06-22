@@ -5,9 +5,11 @@ describe('an ignition instance', function () {
         LabConstructor = function () {};
         newLab = function (arg) { if (typeof arg === 'function') arg(); return new LabConstructor(); };
         LabConstructor.prototype.script = newLab;
+        LabConstructor.prototype.optionalScript = newLab;
         LabConstructor.prototype.wait = newLab;
         $LAB = new LabConstructor();
-        spyOn($LAB, 'script').and.callThrough();
+        spyOn($LAB, 'script').and.returnValue($LAB);
+        spyOn($LAB, 'optionalScript').and.returnValue($LAB);
         spyOn($LAB, 'wait').and.callThrough();
         angular = {
             bootstrap: function () {}
@@ -781,13 +783,16 @@ describe('an ignition instance', function () {
             expect(ignition._loadTier).toEqual(jasmine.any(Function));
         });
         describe('when called with a tier index and a $LAB chain', function () {
-            it('should call script with the sources from the tier corresponding to the given tier index', function () {
-                var srcs = [ 'foo', 'bar' ];
-                $LAB = new LabConstructor();
+            it("should call script with the tier's sources and optionalScript with the tier's optional sources", function () {
+                var srcs = [ 'foo', 'bar' ],
+                    optionalSrcs = [ 'baz' ];
                 ignition.tiers[0].registerSrcs(srcs);
-                spyOn($LAB, 'script').and.callThrough();
+                optionalSrcs.forEach(function (optionalSrc) {
+                    ignition.tiers[0].registerSrc(optionalSrc, true);
+                });
                 ignition._loadTier(0, $LAB);
                 expect($LAB.script).toHaveBeenCalledWith(srcs);
+                expect($LAB.optionalScript).toHaveBeenCalledWith(optionalSrcs);
             });
         });
     });
