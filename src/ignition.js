@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v4.0.0 <https://github.com/carsdotcom>
+ * IgnitionJS v4.1.0 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -138,26 +138,26 @@
 
         function registerByName(subject) {
             if (isString(subject)) {
-                let { cleanSubject, isOptional } = removeOptionalIndicator(subject);
-                this.registerSrc(ig.namedSrcs[cleanSubject], isOptional);
+                let { parsedSubject, isOptional } = parseSubject(subject);
+                this.registerSrc(ig.namedSrcs[parsedSubject], isOptional);
             } else if (isArray(subject)) {
                 for (let i = 0; i < subject.length; i++) {
-                    let { cleanSubject, isOptional } = removeOptionalIndicator(subject[i]);
-                    this.registerSrc(ig.namedSrcs[cleanSubject], isOptional);
+                    let { parsedSubject, isOptional } = parseSubject(subject[i]);
+                    this.registerSrc(ig.namedSrcs[parsedSubject], isOptional);
                 }
             } else {
                 throw new IgnitionError('Invalid subject');
             }
         }
 
-        function removeOptionalIndicator (subject) {
-            let cleanSubject = (subject.indexOf('?') === subject.length - 1) ?
+        function parseSubject (subject) {
+            let parsedSubject = (subject.indexOf('?') === subject.length - 1) ?
                     subject.slice(0, subject.length - 1) :
                     subject;
 
             return {
-                cleanSubject,
-                isOptional: subject !== cleanSubject
+                parsedSubject,
+                isOptional: subject !== parsedSubject
             };
         }
 
@@ -293,9 +293,10 @@
 
     Ignition.fn._loadTier = function (t, chain) {
         var ig = this;
-        return chain.script(ig.tiers[t].getSrcs()).wait(() => {
-            ig._execFunctionQueue(ig.tiers[t].getFns());
-        });
+        return chain.optionalScript(ig.tiers[t].getOptionalSrcs())
+            .script(ig.tiers[t].getSrcs()).wait(() => {
+                ig._execFunctionQueue(ig.tiers[t].getFns());
+            });
     };
 
     Ignition.fn._injectCss = function (src) {

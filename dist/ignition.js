@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v4.0.0 <https://github.com/carsdotcom>
+ * IgnitionJS v4.1.0 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -129,32 +129,32 @@
 
             function registerByName(subject) {
                 if (isString(subject)) {
-                    var _removeOptionalIndicator = removeOptionalIndicator(subject);
+                    var _parseSubject = parseSubject(subject);
 
-                    var cleanSubject = _removeOptionalIndicator.cleanSubject;
-                    var isOptional = _removeOptionalIndicator.isOptional;
+                    var parsedSubject = _parseSubject.parsedSubject;
+                    var isOptional = _parseSubject.isOptional;
 
-                    this.registerSrc(ig.namedSrcs[cleanSubject], isOptional);
+                    this.registerSrc(ig.namedSrcs[parsedSubject], isOptional);
                 } else if (isArray(subject)) {
                     for (var i = 0; i < subject.length; i++) {
-                        var _removeOptionalIndicator2 = removeOptionalIndicator(subject[i]);
+                        var _parseSubject2 = parseSubject(subject[i]);
 
-                        var cleanSubject = _removeOptionalIndicator2.cleanSubject;
-                        var isOptional = _removeOptionalIndicator2.isOptional;
+                        var parsedSubject = _parseSubject2.parsedSubject;
+                        var isOptional = _parseSubject2.isOptional;
 
-                        this.registerSrc(ig.namedSrcs[cleanSubject], isOptional);
+                        this.registerSrc(ig.namedSrcs[parsedSubject], isOptional);
                     }
                 } else {
                     throw new IgnitionError('Invalid subject');
                 }
             }
 
-            function removeOptionalIndicator(subject) {
-                var cleanSubject = subject.indexOf('?') === subject.length - 1 ? subject.slice(0, subject.length - 1) : subject;
+            function parseSubject(subject) {
+                var parsedSubject = subject.indexOf('?') === subject.length - 1 ? subject.slice(0, subject.length - 1) : subject;
 
                 return {
-                    cleanSubject: cleanSubject,
-                    isOptional: subject !== cleanSubject
+                    parsedSubject: parsedSubject,
+                    isOptional: subject !== parsedSubject
                 };
             }
 
@@ -312,7 +312,7 @@
 
         Ignition.fn._loadTier = function (t, chain) {
             var ig = this;
-            return chain.script(ig.tiers[t].getSrcs()).wait(function () {
+            return chain.optionalScript(ig.tiers[t].getOptionalSrcs()).script(ig.tiers[t].getSrcs()).wait(function () {
                 ig._execFunctionQueue(ig.tiers[t].getFns());
             });
         };
