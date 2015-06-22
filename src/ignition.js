@@ -138,14 +138,27 @@
 
         function registerByName(subject) {
             if (isString(subject)) {
-                this.registerSrc(ig.namedSrcs[subject]);
+                let { cleanSubject, isOptional } = removeOptionalIndicator(subject);
+                this.registerSrc(ig.namedSrcs[cleanSubject], isOptional);
             } else if (isArray(subject)) {
                 for (let i = 0; i < subject.length; i++) {
-                    this.registerSrc(ig.namedSrcs[subject[i]]);
+                    let { cleanSubject, isOptional } = removeOptionalIndicator(subject[i]);
+                    this.registerSrc(ig.namedSrcs[cleanSubject], isOptional);
                 }
             } else {
                 throw new IgnitionError('Invalid subject');
             }
+        }
+
+        function removeOptionalIndicator (subject) {
+            let cleanSubject = (subject.indexOf('?') === subject.length - 1) ?
+                    subject.slice(0, subject.length - 1) :
+                    subject;
+
+            return {
+                cleanSubject,
+                isOptional: subject !== cleanSubject
+            };
         }
 
         function getAllSrcs() {
@@ -157,9 +170,15 @@
         }
 
         function generateTierRegistration(t) {
-            return function (subject) {
+            return function (subject, optional=false) {
                 if (!ig.tiers[t].validation(subject)) throw new IgnitionError('Invalid subject');
-                if (!isRegistered(ig.tiers[t].srcs, subject, getAllSrcs())) ig.tiers[t].srcs.push(subject);
+                if (!isRegistered(ig.tiers[t].srcs, subject, getAllSrcs())) {
+                    if (optional) {
+                        ig.tiers[t].optionalSrcs.push(subject);
+                    } else {
+                        ig.tiers[t].srcs.push(subject);
+                    }
+                }
             };
         }
 
@@ -234,10 +253,13 @@
                     throw new IgnitionError('Illegal alias name');
                 }
             }
+
             ig.tiers[t].validation = (options.tiers[t] && isFunction(options.tiers[t].validation)) ? options.tiers[t].validation : isString;
             ig.tiers[t].fns = [];
             ig.tiers[t].srcs = [];
+            ig.tiers[t].optionalSrcs = [];
             ig.tiers[t].getSrcs = generateArrayPropCloner('srcs');
+            ig.tiers[t].getOptionalSrcs = generateArrayPropCloner('optionalSrcs');
             ig.tiers[t].getFns = generateArrayPropCloner('fns');
             ig.tiers[t].registerSrc = generateTierRegistration(t);
             ig.tiers[t].registerFn = generateRegistration(ig.tiers[t].fns, isFunction);
