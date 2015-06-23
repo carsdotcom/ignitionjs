@@ -1,5 +1,5 @@
 /*!
- * IgnitionJS v4.0.0 <https://github.com/carsdotcom>
+ * IgnitionJS v4.1.0 <https://github.com/carsdotcom>
  * @license Apache 2.0
  * @copyright 2014 Cars.com <http://www.cars.com/>
  * @author Mac Heller-Ogden
@@ -138,14 +138,27 @@
 
         function registerByName(subject) {
             if (isString(subject)) {
-                this.registerSrc(ig.namedSrcs[subject]);
+                let { parsedSubject, isOptional } = parseSubject(subject);
+                this.registerSrc(ig.namedSrcs[parsedSubject], isOptional);
             } else if (isArray(subject)) {
                 for (let i = 0; i < subject.length; i++) {
-                    this.registerSrc(ig.namedSrcs[subject[i]]);
+                    let { parsedSubject, isOptional } = parseSubject(subject[i]);
+                    this.registerSrc(ig.namedSrcs[parsedSubject], isOptional);
                 }
             } else {
                 throw new IgnitionError('Invalid subject');
             }
+        }
+
+        function parseSubject (subject) {
+            let parsedSubject = (subject.indexOf('?') === subject.length - 1) ?
+                    subject.slice(0, subject.length - 1) :
+                    subject;
+
+            return {
+                parsedSubject,
+                isOptional: subject !== parsedSubject
+            };
         }
 
         function getAllSrcs() {
@@ -157,9 +170,15 @@
         }
 
         function generateTierRegistration(t) {
-            return function (subject) {
+            return function (subject, optional=false) {
                 if (!ig.tiers[t].validation(subject)) throw new IgnitionError('Invalid subject');
-                if (!isRegistered(ig.tiers[t].srcs, subject, getAllSrcs())) ig.tiers[t].srcs.push(subject);
+                if (!isRegistered(ig.tiers[t].srcs, subject, getAllSrcs())) {
+                    if (optional) {
+                        ig.tiers[t].optionalSrcs.push(subject);
+                    } else {
+                        ig.tiers[t].srcs.push(subject);
+                    }
+                }
             };
         }
 
@@ -234,10 +253,13 @@
                     throw new IgnitionError('Illegal alias name');
                 }
             }
+
             ig.tiers[t].validation = (options.tiers[t] && isFunction(options.tiers[t].validation)) ? options.tiers[t].validation : isString;
             ig.tiers[t].fns = [];
             ig.tiers[t].srcs = [];
+            ig.tiers[t].optionalSrcs = [];
             ig.tiers[t].getSrcs = generateArrayPropCloner('srcs');
+            ig.tiers[t].getOptionalSrcs = generateArrayPropCloner('optionalSrcs');
             ig.tiers[t].getFns = generateArrayPropCloner('fns');
             ig.tiers[t].registerSrc = generateTierRegistration(t);
             ig.tiers[t].registerFn = generateRegistration(ig.tiers[t].fns, isFunction);
@@ -271,9 +293,10 @@
 
     Ignition.fn._loadTier = function (t, chain) {
         var ig = this;
-        return chain.script(ig.tiers[t].getSrcs()).wait(() => {
-            ig._execFunctionQueue(ig.tiers[t].getFns());
-        });
+        return chain.optionalScript(ig.tiers[t].getOptionalSrcs())
+            .script(ig.tiers[t].getSrcs()).wait(() => {
+                ig._execFunctionQueue(ig.tiers[t].getFns());
+            });
     };
 
     Ignition.fn._injectCss = function (src) {

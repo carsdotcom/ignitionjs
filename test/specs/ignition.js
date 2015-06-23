@@ -5,9 +5,11 @@ describe('an ignition instance', function () {
         LabConstructor = function () {};
         newLab = function (arg) { if (typeof arg === 'function') arg(); return new LabConstructor(); };
         LabConstructor.prototype.script = newLab;
+        LabConstructor.prototype.optionalScript = newLab;
         LabConstructor.prototype.wait = newLab;
         $LAB = new LabConstructor();
-        spyOn($LAB, 'script').and.callThrough();
+        spyOn($LAB, 'script').and.returnValue($LAB);
+        spyOn($LAB, 'optionalScript').and.returnValue($LAB);
         spyOn($LAB, 'wait').and.callThrough();
         angular = {
             bootstrap: function () {}
@@ -529,6 +531,22 @@ describe('an ignition instance', function () {
         });
     });
 
+    describe('#tiers[0].getOptionalSrcs', function () {
+        beforeEach(function () {
+            ignition = new Ignition();
+        });
+        it('should be a function', function () {
+            expect(ignition.tiers[0].getOptionalSrcs).toEqual(jasmine.any(Function));
+        });
+        describe('when called', function () {
+            it('should return an array', function () {
+                var srcs = ignition.tiers[0].getOptionalSrcs();
+                expect(srcs).toEqual(jasmine.any(Object));
+                expect(srcs.length).toEqual(jasmine.any(Number));
+            });
+        });
+    });
+
     describe('#tiers[0].register', function () {
         beforeEach(function () {
             ignition = new Ignition({
@@ -542,9 +560,13 @@ describe('an ignition instance', function () {
         });
         describe('when called with a name which has been defined in options.sources', function () {
             describe('the first time it is called', function () {
-                it('will register the corresponding source', function () {
+               it('will register the corresponding source', function () {
                     ignition.tiers[0].register('foo');
                     expect(ignition.tiers[0].getSrcs().indexOf('foo/bar.js') >= 0).toEqual(true);
+                });
+                it('will register the corresponding source as optional if appended with a `?`', function () {
+                    ignition.tiers[0].register('foo?');
+                    expect(ignition.tiers[0].getOptionalSrcs().indexOf('foo/bar.js') >= 0).toEqual(true);
                 });
             });
             describe('if already registered to another tier', function () {
@@ -572,6 +594,20 @@ describe('an ignition instance', function () {
                     expect(ignition.tiers[0].getSrcs().length === 1).toEqual(true);
                 });
             });
+            describe('when registered as optional and then a second time as required', function () {
+                it('will register the source as optional', function () {
+                    ignition.tiers[0].register('foo?');
+                    ignition.tiers[0].register('foo');
+                    expect(ignition.tiers[0].getOptionalSrcs().length === 1).toEqual(true);
+                });
+            });
+            describe('when registered as and then a registered a second time as optional', function () {
+                it('will register the source as optional', function () {
+                    ignition.tiers[0].register('foo');
+                    ignition.tiers[0].register('foo?');
+                    expect(ignition.tiers[0].getSrcs().length === 1).toEqual(true);
+                });
+            });
         });
         describe('when called with a name which has not been defined in options.sources', function () {
             it('should throw an error', function () {
@@ -593,6 +629,24 @@ describe('an ignition instance', function () {
                     spyOn(ignition.tiers[0], 'registerSrc').and.callThrough();
                     ignition.tiers[0].register(srcs);
                     expect(ignition.tiers[0].registerSrc.calls.count()).toEqual(srcs.length);
+            });
+        });
+        describe('when called with an array which includes an optional source', function () {
+            it('should call registerSrc once for each item in the array', function () {
+                    var srcs = [ 'foo', 'bar?', 'baz' ];
+                    ignition = new Ignition({
+                        sources: {
+                            foo: 'foo/foo.js',
+                            bar: 'bar/bar.js',
+                            baz: 'baz/baz.js'
+                        }
+                    });
+                    spyOn(ignition.tiers[0], 'registerSrc').and.callThrough();
+                    ignition.tiers[0].register(srcs);
+                    expect(ignition.tiers[0].registerSrc.calls.count()).toEqual(srcs.length);
+                    expect(ignition.tiers[0].registerSrc).toHaveBeenCalledWith('foo/foo.js', false);
+                    expect(ignition.tiers[0].registerSrc).toHaveBeenCalledWith('bar/bar.js', true);
+                    expect(ignition.tiers[0].registerSrc).toHaveBeenCalledWith('baz/baz.js', false);
             });
         });
         describe('when called with something other than a string or an array', function () {
@@ -729,13 +783,16 @@ describe('an ignition instance', function () {
             expect(ignition._loadTier).toEqual(jasmine.any(Function));
         });
         describe('when called with a tier index and a $LAB chain', function () {
-            it('should call script with the sources from the tier corresponding to the given tier index', function () {
-                var srcs = [ 'foo', 'bar' ];
-                $LAB = new LabConstructor();
+            it("should call script with the tier's sources and optionalScript with the tier's optional sources", function () {
+                var srcs = [ 'foo', 'bar' ],
+                    optionalSrcs = [ 'baz' ];
                 ignition.tiers[0].registerSrcs(srcs);
-                spyOn($LAB, 'script').and.callThrough();
+                optionalSrcs.forEach(function (optionalSrc) {
+                    ignition.tiers[0].registerSrc(optionalSrc, true);
+                });
                 ignition._loadTier(0, $LAB);
                 expect($LAB.script).toHaveBeenCalledWith(srcs);
+                expect($LAB.optionalScript).toHaveBeenCalledWith(optionalSrcs);
             });
         });
     });
