@@ -16,7 +16,6 @@
         "one-var": 2,
         "vars-on-top": 2,
         "no-mixed-requires": 0,
-        "wrap-iife": [2, "any"],
         "camelcase": 2,
         "curly": 1,
         "eqeqeq": 0,
@@ -62,8 +61,6 @@
             "allowSingleLine": true
         }],
         "semi": [2, "always"],
-        "no-extra-semi": 0,
-        "curly": 0,
-        "wrap-iife": 0
+        "no-extra-semi": 0
     }
 }
