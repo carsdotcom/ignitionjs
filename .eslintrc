@@ -9,9 +9,6 @@
         "Ignition": true,
         "angular": true
     },
-    "ecmaFeatures": {
-        "blockBindings": true
-    },
     "rules": {
         "one-var": 2,
         "vars-on-top": 2,
@@ -56,7 +53,7 @@
         "no-shadow-restricted-names": 1,
         "no-dupe-keys": 2,
         "eol-last": 0,
-        "space-after-keywords": [2, "always"],
+        "keyword-spacing": ["error", { "after": true }],
         "brace-style": [1, "1tbs", {
             "allowSingleLine": true
         }],
