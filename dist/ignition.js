@@ -10,12 +10,12 @@
 
 {
     (function () {
-        var IgnitionError = function (message) {
+        var IgnitionError = function IgnitionError(message) {
             this.name = 'IgnitionError';
             this.message = message;
         };
 
-        var generateTypeValidation = function (type) {
+        var generateTypeValidation = function generateTypeValidation(type) {
             return function (subject, throwError) {
                 var subjectType = typeof subject,
                     isNull = false,
@@ -36,7 +36,7 @@
             };
         };
 
-        var isRegistered = function (collection, item, superset) {
+        var isRegistered = function isRegistered(collection, item, superset) {
             var spaces;
             superset = isArray(superset) ? superset : [];
             isArray(collection, true);
@@ -55,34 +55,34 @@
             return false;
         };
 
-        var generateRegistration = function (registry, validation) {
+        var generateRegistration = function generateRegistration(registry, validation) {
             return function (subject) {
                 if (!validation(subject)) throw new IgnitionError('Invalid subject');
                 if (!isRegistered(registry, subject)) registry.push(subject);
             };
         };
 
-        var registerMulti = function (registration, subjects) {
+        var registerMulti = function registerMulti(registration, subjects) {
             isArray(subjects, true);
             for (var i = 0; i < subjects.length; i++) {
                 registration(subjects[i]);
             }
         };
 
-        var execFunctionQueue = function (queue) {
+        var execFunctionQueue = function execFunctionQueue(queue) {
             for (var i = 0; i < queue.length; i++) {
                 queue[i].call(window);
             }
         };
 
-        var buildBundlePath = function (name, baseDir, ext) {
+        var buildBundlePath = function buildBundlePath(name, baseDir, ext) {
             if (baseDir.substr(-1) !== '/') {
                 baseDir += '/';
             }
             return baseDir + name + '.' + ext;
         };
 
-        var Ignition = function (options) {
+        var Ignition = function Ignition(options) {
             var ig = this,
                 hasAliases,
                 aliases,
@@ -168,7 +168,7 @@
 
             function generateTierRegistration(t) {
                 return function (subject) {
-                    var optional = arguments[1] === undefined ? false : arguments[1];
+                    var optional = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
                     if (!ig.tiers[t].validation(subject)) throw new IgnitionError('Invalid subject');
                     if (!isRegistered(ig.tiers[t].srcs, subject, getAllSrcs())) {
@@ -208,7 +208,7 @@
             };
 
             ig.bundles.register = function (bundleName) {
-                var bundleModules = arguments[1] === undefined ? ig.bundles.modules[bundleName] || [bundleName] : arguments[1];
+                var bundleModules = arguments.length <= 1 || arguments[1] === undefined ? ig.bundles.modules[bundleName] || [bundleName] : arguments[1];
                 return (function () {
                     isString(bundleName, true);
                     ig.bundles.registerOne(bundleName);
