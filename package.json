@@ -31,7 +31,6 @@
     "karma-jasmine": "~0.2.1",
     "karma-phantomjs-launcher": "^1.0.4",
     "karma-script-launcher": "~0.1.0",
-    "minimist": "^1.1.0",
-    "run-sequence": "^0.3.6"
+    "minimist": "^1.1.0"
   }
 }
